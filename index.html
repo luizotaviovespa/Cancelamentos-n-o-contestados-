@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pendências de Contestação — iFood</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EEF1EF;
+    --paper-raised: #F7F9F7;
+    --ink: #182225;
+    --ink-soft: #4C585C;
+    --ink-faint: #8A9599;
+    --rule: #C7CFCB;
+    --rule-strong: #9FADA8;
+    --ifood: #B81D22;
+    --ifood-deep: #7A1418;
+    --green: #1F7A3D;
+    --green-bg: #DCEEDF;
+    --orange: #B5680A;
+    --orange-bg: #F6E4CB;
+    --focus: #1358A6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper: #14181A; --paper-raised: #1B2124; --ink: #E9EEEC; --ink-soft: #AEBAB8;
+      --ink-faint: #6E7A78; --rule: #313B3C; --rule-strong: #48544F;
+      --ifood: #FF5B6B; --ifood-deep: #FF8B95; --green: #6FCB8E; --green-bg: #1E3324;
+      --orange: #E4A951; --orange-bg: #3A2C15; --focus: #6FA8E0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper: #14181A; --paper-raised: #1B2124; --ink: #E9EEEC; --ink-soft: #AEBAB8;
+    --ink-faint: #6E7A78; --rule: #313B3C; --rule-strong: #48544F;
+    --ifood: #FF5B6B; --ifood-deep: #FF8B95; --green: #6FCB8E; --green-bg: #1E3324;
+    --orange: #E4A951; --orange-bg: #3A2C15; --focus: #6FA8E0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif; line-height:1.45; -webkit-font-smoothing:antialiased;}
+  .num{font-family:"IBM Plex Mono",ui-monospace,"SF Mono",monospace; font-feature-settings:"tnum" 1;}
+  .wrap{max-width:1080px; margin:0 auto; padding:28px 20px 70px;}
+
+  .brandbar{margin-bottom:16px;}
+  .brandbar img{height:26px; display:block;}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .brandbar img{ filter:brightness(0) invert(1); }
+  }
+  :root[data-theme="dark"] .brandbar img{ filter:brightness(0) invert(1); }
+  .masthead{display:flex; justify-content:space-between; align-items:flex-end; gap:20px; padding-bottom:18px; border-bottom:3px solid var(--ink); margin-bottom:22px; flex-wrap:wrap;}
+  .masthead h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:clamp(24px,3.2vw,34px); margin:0 0 6px 0; letter-spacing:-0.01em;}
+  .masthead .sub{color:var(--ink-soft); font-size:14px; max-width:600px;}
+  .masthead .meta{text-align:right; font-size:12.5px; color:var(--ink-faint); font-family:"IBM Plex Mono",monospace; line-height:1.6;}
+  .meta .tag{display:inline-block; background:var(--ifood); color:#fff; font-weight:600; padding:3px 8px; border-radius:2px; font-family:"IBM Plex Sans",sans-serif; font-size:11.5px; letter-spacing:0.03em;}
+
+  .kpi-strip{display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--rule); background:var(--paper-raised); margin-bottom:22px;}
+  .kpi{padding:16px; border-right:1px dashed var(--rule-strong);}
+  .kpi:last-child{border-right:none;}
+  .kpi .k-label{font-size:11.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px;}
+  .kpi .k-val{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:22px;}
+  .kpi .k-sub{font-size:12px; color:var(--ink-soft); margin-top:4px;}
+  .kpi.warn .k-val{color:var(--ifood);}
+  @media (max-width:700px){.kpi-strip{grid-template-columns:repeat(2,1fr);} .kpi{border-bottom:1px dashed var(--rule-strong);} .kpi:nth-child(2n){border-right:none;}}
+
+  .split{display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--rule); margin-bottom:26px; background:var(--paper-raised);}
+  .split-item{padding:16px 18px; border-right:1px dashed var(--rule-strong);}
+  .split-item:last-child{border-right:none;}
+  .split-dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:middle;}
+  .split-item .s-title{font-size:13.5px; font-weight:600;}
+  .split-item .s-val{font-family:"IBM Plex Mono",monospace; font-size:21px; font-weight:600; margin-top:6px;}
+  .split-item .s-desc{font-size:12px; color:var(--ink-soft); margin-top:5px;}
+  @media (max-width:700px){.split{grid-template-columns:1fr;} .split-item{border-right:none; border-bottom:1px dashed var(--rule-strong);}}
+
+  .sec-head{display:flex; align-items:baseline; gap:10px; margin:0 0 12px 0;}
+  .sec-head h2{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:0.04em; margin:0;}
+  .sec-head .sec-line{flex:1; border-top:1px solid var(--rule-strong);}
+
+  .motivos-overall{margin-bottom:30px;}
+  .m-row{display:grid; grid-template-columns:230px 1fr 90px; align-items:center; gap:10px; padding:6px 0; border-bottom:1px dashed var(--rule);}
+  .m-row:last-child{border-bottom:none;}
+  .m-label{font-size:12.5px;}
+  .m-bar-track{height:9px; background:var(--rule);}
+  .m-bar-fill{height:100%; background:var(--ifood);}
+  .m-val{font-family:"IBM Plex Mono",monospace; font-size:12.5px; text-align:right; color:var(--ink-soft);}
+
+  .explorer{display:grid; grid-template-columns:280px 1fr; border:1px solid var(--rule); background:var(--paper-raised); margin-bottom:24px; min-height:480px;}
+  .sidebar{border-right:1px solid var(--rule); display:flex; flex-direction:column;}
+  .mode-tabs{display:flex; border-bottom:1px solid var(--rule);}
+  .mode-tab{flex:1; padding:10px 8px; font-size:11.5px; font-family:"IBM Plex Sans",sans-serif; font-weight:600;
+    background:var(--paper); color:var(--ink-faint); border:none; border-bottom:2px solid transparent; cursor:pointer; line-height:1.3;}
+  .mode-tab:first-child{border-right:1px solid var(--rule);}
+  .mode-tab:hover{color:var(--ink);}
+  .mode-tab.active{color:var(--ink); background:var(--paper-raised); border-bottom:2px solid var(--ifood);}
+  .sidebar-head{padding:14px 14px 10px; border-bottom:1px solid var(--rule);}
+  .sidebar-head input{width:100%; padding:8px 10px; font-size:13px; border:1px solid var(--rule-strong); background:var(--paper); color:var(--ink); font-family:"IBM Plex Sans",sans-serif; border-radius:2px;}
+  .sidebar-head input:focus{outline:2px solid var(--focus); outline-offset:1px;}
+  .sidebar-list{overflow-y:auto; max-height:560px; flex:1;}
+  .loja-item{width:100%; text-align:left; padding:10px 14px; border-bottom:1px solid var(--rule); background:none; border-left:3px solid transparent; cursor:pointer; display:block; font-family:"IBM Plex Sans",sans-serif; color:var(--ink);}
+  .loja-item:hover{background:var(--paper);}
+  .loja-item.active{background:var(--paper); border-left:3px solid var(--ifood);}
+  .loja-item .li-name{font-size:12.6px; font-weight:600; margin-bottom:3px;}
+  .loja-item .li-meta{display:flex; justify-content:space-between; font-size:11.3px; color:var(--ink-faint);}
+  .loja-item .li-meta .li-val{font-family:"IBM Plex Mono",monospace;}
+  .li-badges{display:flex; gap:4px; margin-top:5px; align-items:center;}
+  .li-badge{width:7px; height:7px; border-radius:50%;}
+
+  .detail{padding:20px 24px; overflow-y:auto;}
+  .detail-empty{display:flex; align-items:center; justify-content:center; height:100%; min-height:420px; color:var(--ink-faint); font-size:13.5px; text-align:center; flex-direction:column; gap:8px;}
+  .detail-empty span{font-size:26px;}
+  .detail-head h3{font-family:"IBM Plex Sans Condensed",sans-serif; font-size:20px; font-weight:700; margin:0 0 8px 0;}
+  .marca-badges{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px;}
+  .marca-badge{font-family:"IBM Plex Mono",monospace; font-size:10.6px; padding:3px 7px; border:1px solid var(--rule-strong); border-radius:2px; color:var(--ink-soft);}
+
+  .detail-kpis{display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--rule); margin-bottom:20px;}
+  .dk{padding:12px 14px; border-right:1px dashed var(--rule-strong);}
+  .dk:last-child{border-right:none;}
+  .dk .dk-label{font-size:10.6px; text-transform:uppercase; letter-spacing:0.03em; color:var(--ink-faint); margin-bottom:6px;}
+  .dk .dk-val{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:17px;}
+  @media (max-width:600px){.detail-kpis{grid-template-columns:1fr;}}
+
+  .detail table{width:100%; border-collapse:collapse; font-size:12.3px;}
+  .detail thead th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:0.03em; color:var(--ink-faint); border-bottom:1px solid var(--rule-strong); padding:6px 8px; position:sticky; top:0; background:var(--paper-raised);}
+  .detail tbody td{padding:7px 8px; border-bottom:1px solid var(--rule); vertical-align:top;}
+  .detail tbody tr.row-green{background:var(--green-bg);}
+  .detail tbody tr.row-orange{background:var(--orange-bg);}
+  .tag-pill{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:10px; padding:2px 6px; border-radius:2px; font-weight:600;}
+  .tag-green{background:var(--green); color:#fff;}
+  .tag-orange{background:var(--orange); color:#fff;}
+  .valor-cell{font-family:"IBM Plex Mono",monospace; text-align:right;}
+  .table-scroll{border:1px solid var(--rule); max-height:400px; overflow-y:auto;}
+
+  footer{margin-top:10px; padding-top:16px; border-top:1px solid var(--rule); font-size:12px; color:var(--ink-faint); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+  ::selection{background:var(--ifood); color:#fff;}
+
+  .full-list{margin-bottom:30px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brandbar"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjU2IiBoZWlnaHQ9Ijc5IiB2aWV3Qm94PSIwIDAgNjU2IDc5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTU5Ljg3OCAxNi43NTc3QzE2My42NjUgMTYuNzU3NyAxNjcuMzcgMTcuNzkxOSAxNzAuNTg4IDE5LjczNDNDMTcwLjk3OCAxOS45NjY3IDE3MS40ODggMTkuODg0NyAxNzEuNzggMTkuNTRIMTcxLjc4OEMxNzIuNzQgMTguNDE1IDE3NC4xMzUgMTcuNzY5NSAxNzUuNjA1IDE3Ljc2OTVIMTgwLjYyM1Y1OC4wMDY4QzE4MC42MjMgNjkuNDM2NyAxNzEuMDE2IDc4LjczNzIgMTU5Ljg4NiA3OC43MzcyQzE0OC43NTYgNzguNzM3MiAxMzkuNjUxIDY5LjkzOTggMTM5LjE2MyA1OC45Mzc0SDE0OS4yMjhDMTQ5LjcwMSA2NC40MDQ4IDE1NC4yOTggNjguNzAyIDE1OS44NzggNjguNzAyMUMxNjUuNzggNjguNzAyMSAxNzAuNTgxIDYzLjkwMTggMTcwLjU4MSA1OC4wMDY4VjU2LjgyMjJDMTcwLjU4MSA1Ni40OTk3IDE3MC40MTUgNTYuMTk5OCAxNzAuMTM4IDU2LjAyNzNDMTY5Ljg2IDU1Ljg1NSAxNjkuNTIzIDU1Ljg0NzcgMTY5LjIzIDU1Ljk5MDJDMTY2LjI5OCA1Ny40Njc2IDE2My4xNTUgNTguMjE3NyAxNTkuODc4IDU4LjIxNzdDMTQ4LjQ0IDU4LjIxNzYgMTM5LjE0MSA0OC45MTcyIDEzOS4xNDEgMzcuNDg3MkMxMzkuMTQxIDI2LjA1NzMgMTQ4LjQ0OCAxNi43NTc4IDE1OS44NzggMTYuNzU3N1pNMjA1LjU1NCAxNi43NTc3QzIwOS4zMzQgMTYuNzU3NyAyMTMuMDMyIDE3Ljc5MTggMjE2LjI1NyAxOS43MzQzQzIxNi42NDcgMTkuOTY2NyAyMTcuMTU3IDE5Ljg4NDkgMjE3LjQ0OSAxOS41NEgyMTcuNDU2QzIxOC40MDggMTguNDE1MSAyMTkuODAzIDE3Ljc2OTYgMjIxLjI3MyAxNy43Njk1SDIyNi4yOTFWNTguMDA2OEMyMjYuMjkxIDY5LjQzNjggMjE2LjY4NCA3OC43MzcyIDIwNS41NTQgNzguNzM3MkMxOTQuNDI0IDc4LjczNzEgMTg1LjMxOSA2OS45Mzk4IDE4NC44MzEgNTguOTM3NEgxOTQuODg5QzE5NS4zNjkgNjQuNDA0OSAxOTkuOTY3IDY4LjcwMjEgMjA1LjU0NyA2OC43MDIxQzIxMS40NTcgNjguNzAxOCAyMTYuMjQ5IDYzLjkwMTYgMjE2LjI0OSA1OC4wMDY4VjU2LjgyMjJDMjE2LjI0OSA1Ni40OTk4IDIxNi4wODQgNTYuMTk5OCAyMTUuODA3IDU2LjAyNzNDMjE1LjUyOSA1NS44NTQ4IDIxNS4xODMgNTUuODQ3NyAyMTQuODk4IDU1Ljk5MDJDMjExLjk3MyA1Ny40Njc1IDIwOC44MzEgNTguMjE3NyAyMDUuNTU0IDU4LjIxNzdDMTk0LjExNiA1OC4yMTc2IDE4NC44MTYgNDguOTE3MiAxODQuODE2IDM3LjQ4NzJDMTg0LjgxNiAyNi4wNTczIDE5NC4xMjQgMTYuNzU3OSAyMDUuNTU0IDE2Ljc1NzdaTTM2LjA5NTYgNzIuNjMxOEMyNi43MzM2IDY1Ljc0NyAzNS43ODAyIDUwLjU5OSA0Ni42NTgxIDU2LjI2OTVDNTkuMTY0IDYyLjc5MDMgNDguMjQ5MSA4MS41NzA3IDM2LjA5NTYgNzIuNjMxOFpNNi4yMzIzMSA2OC40MjE4Qy01LjgxOTc4IDY0LjM3MzcgMS4zOTQ2MyA0Ni42MzQ1IDEyLjc0NzkgNTIuNDMxNkMyMi4zNjQgNTcuMzQ3IDE2LjM5NzggNzEuODM2IDYuMjMyMzEgNjguNDIxOFpNMjMuOTE2OSA1NS40OTZDMjUuOTM0NSA1My44NDE5IDI4Ljk0NjUgNTYuNTk2IDI2LjkwNzEgNTguNzIzNkMyNi43MTc1IDU4LjkyMyAyNi4yODM3IDU5LjEzNzUgMjYuMDEwNiA1OS4yMDRDMjMuNzg4OCA1OS43Mjc5IDIyLjA4MzMgNTYuOTk1OSAyMy45MTY5IDU1LjQ5NlpNMTE0LjM2MSAxNi45MTVDMTI1LjY1NiAxNi45MTUgMTM0LjgzNyAyNi4wOTQ0IDEzNC44MzcgMzcuMzgxOFY1Ni44NTI1SDEyOS44ODdDMTI4LjQzOSA1Ni44NTI1IDEyNy4wNjcgNTYuMjIyIDEyNi4xMjIgNTUuMTEyMkMxMjUuODIyIDU0Ljc1OTggMTI1LjMyIDU0LjY4NDcgMTI0LjkzIDU0LjkxNjlDMTIxLjc1IDU2LjgzNjkgMTE4LjA5NiA1Ny44NDk1IDExNC4zNjEgNTcuODQ5NUMxMDMuMDc0IDU3Ljg0OTMgOTMuODg2NiA0OC42NjkxIDkzLjg4NjYgMzcuMzgxOEM5My44ODY3IDI2LjA5NDUgMTAzLjA3NCAxNi45MTUyIDExNC4zNjEgMTYuOTE1Wk0yNTEuMDMzIDE2LjkxNUMyNjIuMzI4IDE2LjkxNSAyNzEuNTA5IDI2LjA5NDQgMjcxLjUwOSAzNy4zODE4VjU2Ljg1MjVIMjY2LjU1OEMyNjUuMTExIDU2Ljg1MjUgMjYzLjczOSA1Ni4yMjIgMjYyLjc5NCA1NS4xMTIyQzI2Mi40OTQgNTQuNzU5OCAyNjEuOTkxIDU0LjY3NzIgMjYxLjYwMSA1NC45MTY5QzI1OC40MjEgNTYuODM2OSAyNTQuNzY4IDU3Ljg0OTUgMjUxLjAzMyA1Ny44NDk1QzIzOS43MzggNTcuODQ5MyAyMzAuNTU4IDQ4LjY2OTEgMjMwLjU1OCAzNy4zODE4QzIzMC41NTkgMjYuMDk0NSAyMzkuNzM4IDE2LjkxNTIgMjUxLjAzMyAxNi45MTVaTTc0Ljc4MzEgMTYuOTc0NUM3Ni44MDA1IDE2Ljk3NDUgNzguNjMwNiAxOC4xNjcxIDc5LjQ0ODEgMjAuMDE5NUM3OS41NTMxIDIwLjI1OTUgNzkuNzYzNSAyMC40NDc0IDgwLjAxODQgMjAuNTIyNFYyMC41MjkyQzgwLjI3MzQgMjAuNjExNyA4MC41NTA2IDIwLjU4MTggODAuNzgzMSAyMC40Mzk0Qzg0LjEwNTYgMTguNDI5NCA4Ny44ODY0IDE3LjI5NzEgOTEuNzcxNCAxNy4xMzk2VjI3LjM1NDRDODUuMTMzOSAyNy44MzQ0IDc5Ljg4MzcgMzMuMzg0NyA3OS44ODM3IDQwLjEzNDdWNTcuMDYyNEg2OS42ODM1VjE2Ljk3NDVINzQuNzgzMVpNMzIuOTU2OSA0OS4xMjJDMzQuOTc0NyA0Ny40MzQ4IDM3Ljk4NDQgNTAuMjQ3MiAzNS45NDQyIDUyLjQxODlDMzUuNzU0NiA1Mi42MjI0IDM1LjMyMTggNTIuODQxMSAzNS4wNDg3IDUyLjkwOTFDMzIuODI2NSA1My40NDM3IDMxLjEyMTQgNTAuNjUyOSAzMi45NTY5IDQ5LjEyMlpNMTcuMTcwOCA0OC4yMTg3QzE5LjE4ODUgNDYuNTYzOSAyMi4xOTkgNDkuMzE4NSAyMC4xNTkxIDUxLjQ0NjJDMTkuOTY5NyA1MS42NDU0IDE5LjUzODcgNTEuODU5OSAxOS4yNjU1IDUxLjkyNjdDMTcuMDQyOSA1Mi40NTEyIDE1LjMzNTEgNDkuNzE4NSAxNy4xNzA4IDQ4LjIxODdaTTQ3Ljg4MDcgMzUuNDYzOEM1Ny4xNDg0IDMzLjI2MzIgNjAuODM1NyA0Ny4wNjgxIDUxLjgzMDkgNDkuMzI5QzQyLjY3NjYgNTEuNjI2OSAzOC43MzQ1IDM3LjY0MjQgNDcuODgwNyAzNS40NjM4Wk0xNTkuODc4IDI2Ljc5OTdDMTUzLjk4MyAyNi43OTk4IDE0OS4xODMgMzEuNjAwMSAxNDkuMTgzIDM3LjQ5NUMxNDkuMTg0IDQzLjM4OTkgMTUzLjk4MyA0OC4xODkzIDE1OS44NzggNDguMTg5NEMxNjUuNzggNDguMTg5NCAxNzAuNTgxIDQzLjM4OTkgMTcwLjU4MSAzNy40OTVDMTcwLjU4MSAzMS42IDE2NS43NzMgMjYuNzk5NyAxNTkuODc4IDI2Ljc5OTdaTTIwNS41NTQgMjYuNzk5N0MxOTkuNjUxIDI2Ljc5OTggMTk0Ljg1MSAzMS42MDAxIDE5NC44NTEgMzcuNDk1QzE5NC44NTIgNDMuMzg5OCAxOTkuNjU5IDQ4LjE4OTMgMjA1LjU1NCA0OC4xODk0QzIxMS40NDkgNDguMTg5NCAyMTYuMjQ5IDQzLjM4OTkgMjE2LjI0OSAzNy40OTVDMjE2LjI0OSAzMS42IDIxMS40NTYgMjYuNzk5NyAyMDUuNTU0IDI2Ljc5OTdaTTExNC4zNjEgMjYuODA2NkMxMDguNTM0IDI2LjgwNjggMTAzLjc4NyAzMS41NDcgMTAzLjc4NyAzNy4zODE4QzEwMy43ODcgNDMuMjE2NiAxMDguNTM0IDQ3Ljk1NjggMTE0LjM2MSA0Ny45NTdDMTIwLjE4OSA0Ny45NTcgMTI0LjkzNiA0My4yMTY4IDEyNC45MzYgMzcuMzgxOEMxMjQuOTM2IDMxLjU0NjkgMTIwLjE4OSAyNi44MDY2IDExNC4zNjEgMjYuODA2NlpNMjUxLjAzMyAyNi44MDY2QzI0NS4xOTggMjYuODA2OCAyNDAuNDU5IDMxLjU0NyAyNDAuNDU5IDM3LjM4MThDMjQwLjQ1OSA0My4yMTY2IDI0NS4yMDYgNDcuOTU2OCAyNTEuMDMzIDQ3Ljk1N0MyNTYuODY4IDQ3Ljk1NyAyNjEuNjA4IDQzLjIxNjggMjYxLjYwOCAzNy4zODE4QzI2MS42MDggMzEuNTQ2OSAyNTYuODY4IDI2LjgwNjYgMjUxLjAzMyAyNi44MDY2Wk0zNTguMzQ5IDE3LjMyNzFDMzYyLjgwNCAxNy4zMjcxIDM2Ni4xOTQgMTguMDYyMyAzNjguNTEyIDE5LjUzMjJDMzcwLjgzNiAyMS4wMDIxIDM3MS45OTIgMjMuNDA5NCAzNzEuOTkyIDI2Ljc2MTZWMjcuNzM3MkMzNzEuOTkyIDI3Ljg3MiAzNzEuOTI1IDI3LjkzOTMgMzcxLjc5IDI3LjkzOTRIMzY2LjUyNEMzNjYuMzkgMjcuOTM5MyAzNjYuMzIyIDI3Ljg3MiAzNjYuMzIyIDI3LjczNzJWMjYuODA3NUMzNjYuMzIyIDI1LjA4MjYgMzY1LjcwNyAyMy44MDcgMzY0LjQ3NyAyMi45OTdDMzYzLjI0NyAyMi4xODcgMzYxLjI0NCAyMS43ODIyIDM1OC40NjIgMjEuNzgyMkMzNTMuNjMyIDIxLjc4MjIgMzUxLjIxIDIyLjkxNSAzNTEuMjEgMjUuMTg3NFYyNS42NzQ3QzM1MS4yMSAyNi40MzIyIDM1MS41NTUgMjcuMDMyMSAzNTIuMjQ1IDI3LjQ3NDVDMzUyLjkzNSAyNy45MTcgMzUzLjc5NyAyOC4yNjIyIDM1NC44NCAyOC41MDk3QzM1NS44ODIgMjguNzQ5NyAzNTcuMzYgMjkuMDE5MyAzNTkuMjcyIDI5LjMxOTNDMzYyLjEzNyAyOS43NzY4IDM2NC4zNzIgMzAuMjEyMSAzNjUuOTkyIDMwLjYxNzFDMzY3LjYxMiAzMS4wMjIxIDM2OS4wMzcgMzEuNzE5NiAzNzAuMjY3IDMyLjcwMjFDMzcxLjQ5NyAzMy42ODQ2IDM3Mi4xMTIgMzUuMDU3NSAzNzIuMTEyIDM2LjgxMjRWMzguNTE0NkMzNzIuMTEyIDQxLjUzNjkgMzcwLjk5NSA0My42Mjk0IDM2OC43NjcgNDQuNzkxOUMzNjYuNTQgNDUuOTU0NCAzNjMuMTk0IDQ2LjUzMjIgMzU4LjczOSA0Ni41MzIyQzM1NC4yODQgNDYuNTMyMSAzNTAuOTM5IDQ1Ljc5NyAzNDguNzEyIDQ0LjMyNzFDMzQ2LjQ4NCA0Mi44NTcxIDM0NS4zNjcgNDAuMzc0NCAzNDUuMzY3IDM2Ljg5NDVMMzQ1LjQwNCAzNi44Nzk4VjM1LjcwMjFDMzQ1LjQwNCAzNS41NjcxIDM0NS40NzIgMzUuNDk5OSAzNDUuNjA3IDM1LjQ5OTlIMzUwLjg3MkMzNTEuMDA3IDM1LjQ5OTkgMzUxLjA3NCAzNS41NjcxIDM1MS4wNzQgMzUuNzAyMVYzNi44MzQ5QzM1MS4wNzQgMzguNjcyMiAzNTEuNjgyIDM5Ljk5MTcgMzUyLjg5NyA0MC44MDE3QzM1NC4xMTIgNDEuNjExNyAzNTYuMDY5IDQyLjAxNzUgMzU4Ljc2OSA0Mi4wMTc1QzM2MC43MTIgNDIuMDE3NSAzNjIuMjEyIDQxLjkzNDcgMzYzLjI2MiA0MS43NzczQzM2NC4zMTEgNDEuNjEyMyAzNjUuMTE0IDQxLjI2NzIgMzY1LjY1NCA0MC43Mjc1QzM2Ni4xOTQgNDAuMTg3NSAzNjYuNDY1IDM5LjM2MjEgMzY2LjQ2NSAzOC4yNTk3VjM3LjY4OTRDMzY2LjQ2NSAzNi43OTcxIDM2Ni4wOSAzNi4wOTIyIDM2NS4zNDggMzUuNTY3M0MzNjQuNjA1IDM1LjA0MjMgMzYzLjY3NSAzNC42NTIxIDM2Mi41NSAzNC4zODk2QzM2MS40MjUgMzQuMTI3MSAzNTkuODg3IDMzLjg3MjUgMzU3LjkxNSAzMy42MDI1QzM1NS4yOTcgMzMuMjI3NSAzNTMuMTY3IDMyLjgyMTcgMzUxLjUzMiAzMi4zODY3QzM0OS44OTcgMzEuOTUxNyAzNDguNDk1IDMxLjIxNzQgMzQ3LjMxNyAzMC4xODI1QzM0Ni4xNCAyOS4xNCAzNDUuNTU1IDI3LjY5MiAzNDUuNTU1IDI1LjgzMlYyNS4yMjQ1QzM0NS41NTUgMTkuOTU5NiAzNDkuODIyIDE3LjMyNzEgMzU4LjM0OSAxNy4zMjcxWk02NDEuOTI0IDE3LjMyNzFDNjQ2LjM3OSAxNy4zMjcxIDY0OS43NjggMTguMDYyMyA2NTIuMDg2IDE5LjUzMjJDNjU0LjQxMSAyMS4wMDIxIDY1NS41NjYgMjMuNDA5NCA2NTUuNTY2IDI2Ljc2MTZWMjcuNzM3MkM2NTUuNTY2IDI3Ljg3MiA2NTUuNDk5IDI3LjkzOTMgNjU1LjM2NCAyNy45Mzk0SDY1MC4wOTlDNjQ5Ljk2NCAyNy45MzkzIDY0OS44OTYgMjcuODcyIDY0OS44OTYgMjcuNzM3MlYyNi44MDc1QzY0OS44OTYgMjUuMDgyNiA2NDkuMjgxIDIzLjgwNyA2NDguMDUyIDIyLjk5N0M2NDYuODIyIDIyLjE4NyA2NDQuODE4IDIxLjc4MjIgNjQyLjAzNiAyMS43ODIyQzYzNy4yMDYgMjEuNzgyMiA2MzQuNzg0IDIyLjkxNSA2MzQuNzg0IDI1LjE4NzRWMjUuNjc0N0M2MzQuNzg0IDI2LjQzMjIgNjM1LjEyOSAyNy4wMzIxIDYzNS44MTkgMjcuNDc0NUM2MzYuNTA5IDI3LjkxNjkgNjM3LjM3MiAyOC4yNjIyIDYzOC40MTQgMjguNTA5N0M2MzkuNDU2IDI4Ljc0OTcgNjQwLjkzNCAyOS4wMTkzIDY0Mi44NDcgMjkuMzE5M0M2NDUuNzExIDI5Ljc3NjggNjQ3Ljk0NiAzMC4yMTIxIDY0OS41NjYgMzAuNjE3MUM2NTEuMTg2IDMxLjAyMjEgNjUyLjYxMiAzMS43MTk2IDY1My44NDIgMzIuNzAyMUM2NTUuMDcxIDMzLjY4NDYgNjU1LjY4NiAzNS4wNTc2IDY1NS42ODYgMzYuODEyNFYzOC41MTQ2QzY1NS42ODYgNDEuNTM2OSA2NTQuNTY5IDQzLjYyOTQgNjUyLjM0MiA0NC43OTE5QzY1MC4xMTQgNDUuOTU0NCA2NDYuNzY4IDQ2LjUzMjIgNjQyLjMxMyA0Ni41MzIyQzYzNy44NTkgNDYuNTMyMSA2MzQuNTEzIDQ1Ljc5NyA2MzIuMjg2IDQ0LjMyNzFDNjMwLjA1OSA0Mi44NTcxIDYyOC45NDEgNDAuMzc0NCA2MjguOTQxIDM2Ljg5NDVMNjI4Ljk3MiAzNi44Nzk4VjM1LjcwMjFDNjI4Ljk3MiAzNS41NjcxIDYyOS4wMzkgMzUuNSA2MjkuMTc0IDM1LjQ5OTlINjM0LjQzOEM2MzQuNTczIDM1LjQ5OTkgNjM0LjY0MSAzNS41NjcxIDYzNC42NDEgMzUuNzAyMVYzNi44MzQ5QzYzNC42NDIgMzguNjcyMSA2MzUuMjQ5IDM5Ljk5MTcgNjM2LjQ2NCA0MC44MDE3QzYzNy42NzkgNDEuNjExNiA2MzkuNjM2IDQyLjAxNzUgNjQyLjMzNiA0Mi4wMTc1QzY0NC4yNzggNDIuMDE3NSA2NDUuNzc5IDQxLjkzNDggNjQ2LjgyOSA0MS43NzczQzY0Ny44NzkgNDEuNjEyMyA2NDguNjgyIDQxLjI2NzQgNjQ5LjIyMiA0MC43Mjc1QzY0OS43NjIgNDAuMTg3NSA2NTAuMDMxIDM5LjM2MjEgNjUwLjAzMSAzOC4yNTk3VjM3LjY4OTRDNjUwLjAzMSAzNi43OTcgNjQ5LjY1NiAzNi4wOTIzIDY0OC45MjEgMzUuNTY3M0M2NDguMTc4IDM1LjA0MjQgNjQ3LjI0OSAzNC42NTIxIDY0Ni4xMjQgMzQuMzg5NkM2NDQuOTk5IDM0LjEyNzEgNjQzLjQ2MSAzMy44NzI0IDY0MS40ODkgMzMuNjAyNUM2MzguODcyIDMzLjIyNzUgNjM2Ljc0MSAzMi44MjE3IDYzNS4xMDYgMzIuMzg2N0M2MzMuNDcxIDMxLjk1MTcgNjMyLjA2OSAzMS4yMTc0IDYzMC44OTEgMzAuMTgyNUM2MjkuNzE0IDI5LjE0IDYyOS4xMjkgMjcuNjkyIDYyOS4xMjkgMjUuODMyVjI1LjIyNDVDNjI5LjEyOSAxOS45NTk2IDYzMy4zOTYgMTcuMzI3MSA2NDEuOTI0IDE3LjMyNzFaTTQ0Mi4yNjEgMTcuNjQyNUM0NDIuMzk1IDE3LjY0MjYgNDQyLjQ2MyAxNy43MDk4IDQ0Mi40NjMgMTcuODQ0N1YzNS4yNTk3QzQ0Mi40NjMgMzcuNzE5NiA0NDMuMDYzIDM5LjQ1OTggNDQ0LjI2MyA0MC40ODcyQzQ0NS40NjMgNDEuNTE0NyA0NDcuNDA1IDQyLjAyNDMgNDUwLjA3NSA0Mi4wMjQzQzQ1Mi43NDUgNDIuMDI0MyA0NTQuNzQ3IDQxLjUyMiA0NTUuOTEgNDAuNTA5N0M0NTcuMDcyIDM5LjQ5NzMgNDU3LjY1IDM3Ljc0OTggNDU3LjY1IDM1LjI2NzVWMTcuODUyNUM0NTcuNjUgMTcuNzE3NiA0NTcuNzE4IDE3LjY0OTUgNDU3Ljg1MiAxNy42NDkzSDQ2My4xMThDNDYzLjI1MyAxNy42NDk0IDQ2My4zMiAxNy43MTc1IDQ2My4zMiAxNy44NTI1VjM2LjMxNzNDNDYzLjMyIDQwLjA0NDcgNDYyLjIyNSA0Mi42NzczIDQ2MC4wNDMgNDQuMjE0OEM0NTcuODUzIDQ1Ljc1MjIgNDU0LjUzOCA0Ni41MjQzIDQ1MC4wODMgNDYuNTI0M0M0NDUuNjI4IDQ2LjUyNDMgNDQyLjM2NSA0NS43NTIzIDQ0MC4xMzggNDQuMjE0OEM0MzcuOTEgNDIuNjc3MyA0MzYuNzkzIDQwLjA0NDYgNDM2Ljc5MyAzNi4zMTczVjE3Ljg0NDdDNDM2Ljc5MyAxNy43MDk4IDQzNi44NiAxNy42NDI2IDQzNi45OTUgMTcuNjQyNUg0NDIuMjYxWk01NDQuNTM5IDE3LjY0MjVDNTQ0LjYyMSAxNy42NDI1IDU0NC42NzQgMTcuNjc5NCA1NDQuNzA0IDE3Ljc2MTZMNTU3LjkwNCAzOC43MzkySDU1OC4xODlDNTU3Ljk3MiAzNy4wODkyIDU1Ny44NjYgMzQuNzk0MyA1NTcuODY2IDMxLjg1NDRWMTcuODQ0N0M1NTcuODY2IDE3LjcwOTcgNTU3LjkzNCAxNy42NDI1IDU1OC4wNjkgMTcuNjQyNUg1NjMuMzM0QzU2My40NjkgMTcuNjQyNSA1NjMuNTM2IDE3LjcwOTcgNTYzLjUzNiAxNy44NDQ3VjQ1Ljk5MjFDNTYzLjUzNiA0Ni4xMjcxIDU2My40NjkgNDYuMTk0MyA1NjMuMzM0IDQ2LjE5NDNINTU2LjQ0OUM1NTYuMzY3IDQ2LjE5NDMgNTU2LjI5OCA0Ni4xNTY3IDU1Ni4yNDYgNDYuMDc0Mkw1NDMuMDAyIDI0Ljk3NzVINTQyLjY3OUM1NDIuOTQ5IDI2LjUxNDkgNTQzLjA4NCAyOC42NzQ3IDU0My4wODQgMzEuNDU3VjQ1Ljk5OTlDNTQzLjA4NCA0Ni4xMzQ2IDU0My4wMTYgNDYuMjAyIDU0Mi44ODIgNDYuMjAyMUg1MzcuNjE2QzUzNy40ODEgNDYuMjAyIDUzNy40MTQgNDYuMTM0NSA1MzcuNDE0IDQ1Ljk5OTlWMTcuODQ0N0M1MzcuNDE0IDE3LjcwOTggNTM3LjQ4MSAxNy42NDI2IDUzNy42MTYgMTcuNjQyNUg1NDQuNTM5Wk0zMDAuMTc0IDE3LjY0MjVDMzAzLjc2NiAxNy42NDI1IDMwNi4zOTkgMTguMTk3MyAzMDguMDcxIDE5LjI5OTdDMzA5Ljc0NCAyMC40MDk3IDMxMC41ODQgMjIuMjMyNSAzMTAuNTg0IDI0Ljc2NzVWMjUuNjU5MUMzMTAuNTg0IDI3LjcxNDEgMzEwLjA4OSAyOS4zNSAzMDkuMTA2IDMwLjU4QzMwOC4xMjQgMzEuODA5OCAzMDYuODQ4IDMyLjUxNDYgMzA1LjI4MSAzMi43MDIxVjMyLjk0MjNDMzA2Ljk1NCAzMy4xMjk4IDMwOC4zMjYgMzMuNzIyNSAzMDkuMzkxIDM0LjcyNzVDMzEwLjQ1NiAzNS43MjUgMzEwLjk4OSAzNy4xMjc1IDMxMC45ODkgMzguOTQyM1Y0Mi4yNjQ2QzMxMC45ODkgNDMuODMxOCAzMTEuMDk0IDQ1LjA0NjYgMzExLjMxMSA0NS45MDkxQzMxMS4zNjQgNDYuMDk2NSAzMTEuMjk3IDQ2LjE5NDIgMzExLjEwOSA0Ni4xOTQzSDMwNS43OTlDMzA1LjY2NCA0Ni4xOTQyIDMwNS41ODEgNDYuMTQxNyAzMDUuNTU4IDQ2LjAyOTJDMzA1LjM5NCA0NS42MjQgMzA1LjMxOSA0NC43MTY0IDMwNS4zMTkgNDMuMzE0NFYzOS43OUMzMDUuMzE5IDM3Ljk4MjcgMzA0LjgyNCAzNi43NTI0IDMwMy44NDIgMzYuMTA3NEMzMDIuODU5IDM1LjQ2MjQgMzAxLjI5OSAzNS4xMzE4IDI5OS4xNjEgMzUuMTMxOEgyOTAuMzM0VjQ1Ljk4NDNDMjkwLjMzNCA0Ni4xMTkyIDI5MC4yNjcgNDYuMTg3MyAyOTAuMTMyIDQ2LjE4NzRIMjg0Ljg2NkMyODQuNzMxIDQ2LjE4NzMgMjg0LjY2NCA0Ni4xMTkyIDI4NC42NjQgNDUuOTg0M1YxNy44NDQ3QzI4NC42NjQgMTcuNzA5OCAyODQuNzMxIDE3LjY0MjYgMjg0Ljg2NiAxNy42NDI1SDMwMC4xNzRaTTQwMy44NjIgMTcuNjQyNUM0MDMuOTY3IDE3LjY0MjYgNDA0LjA1IDE3Ljc0NzQgNDA0LjEwMiAxNy45NjQ4VjIxLjc3NDNINDA0LjA5NUM0MDQuMDk1IDIxLjg3OTMgNDA0LjA2NCAyMS45NjIxIDQwNC4wMTIgMjIuMDE0NkM0MDMuOTU5IDIyLjA2NjggNDAzLjkwNyAyMi4wOTY1IDQwMy44NDggMjIuMDk2NkgzOTIuODc1VjQ1Ljk5MjFDMzkyLjg3NSA0Ni4xMjcxIDM5Mi44MDcgNDYuMTk0MyAzOTIuNjcyIDQ2LjE5NDNIMzg3LjQwN0MzODcuMjcyIDQ2LjE5NDMgMzg3LjIwNSA0Ni4xMjcxIDM4Ny4yMDUgNDUuOTkyMVYyMi4wOTY2SDM3Ni4yMzJDMzc2LjA2NyAyMi4wOTY2IDM3NS45OTIgMjEuOTkxOCAzNzUuOTkyIDIxLjc3NDNWMTcuODg5NkMzNzUuOTkyIDE3LjgzNzEgMzc2LjAyMiAxNy43ODQ0IDM3Ni4wNzQgMTcuNzI0NUMzNzYuMTI2IDE3LjY3MjIgMzc2LjE3OSAxNy42NDI2IDM3Ni4yMzkgMTcuNjQyNUg0MDMuODYyWk00MjIuNDc0IDE3LjYzNDdDNDIyLjU1NiAxNy42MzQ4IDQyMi42MjMgMTcuNjg3NCA0MjIuNjc2IDE3Ljc5OTdMNDMzLjM3MSA0NS45NDcyQzQzMy40MDEgNDUuOTk5NiA0MzMuMzkzIDQ2LjA1MjMgNDMzLjM0OSA0Ni4xMTIyQzQzMy4zMTEgNDYuMTY0NiA0MzMuMjU4IDQ2LjE5NDIgNDMzLjIwNiA0Ni4xOTQzSDQyNy42OTNDNDI3LjYxMSA0Ni4xOTQzIDQyNy41NDQgNDYuMTI3MSA0MjcuNDkxIDQ1Ljk5MjFMNDI1LjE0MyAzOS43MTQ4SDQxMC44NDlMNDA4LjUwMSA0NS45OTIxQzQwOC40NDggNDYuMTI3MSA0MDguMzY2IDQ2LjE5NDMgNDA4LjI2MSA0Ni4xOTQzSDQwMi43NTZDNDAyLjcwMyA0Ni4xOTQzIDQwMi42NTEgNDYuMTY0NyA0MDIuNjEzIDQ2LjExMjJDNDAyLjU3NiA0Ni4wNTk3IDQwMi41NjggNDYuMDA3MiA0MDIuNTkxIDQ1Ljk0NzJMNDEzLjMyMyAxNy43OTk3QzQxMy4zNzYgMTcuNjk0NyA0MTMuNDU4IDE3LjYzNDcgNDEzLjU2MyAxNy42MzQ3SDQyMi40NzRaTTQ4Ni40NDMgMTcuNjQyNUM0OTAuMDM2IDE3LjY0MjUgNDkyLjY2OCAxOC4xOTczIDQ5NC4zNDEgMTkuMjk5N0M0OTYuMDEzIDIwLjQwOTcgNDk2Ljg1MyAyMi4yMzI1IDQ5Ni44NTMgMjQuNzY3NVYyNS42NTkxQzQ5Ni44NTMgMjcuNzE0MSA0OTYuMzU4IDI5LjM1IDQ5NS4zNzYgMzAuNThDNDk0LjM5MyAzMS44MDk4IDQ5My4xMTggMzIuNTE0NiA0OTEuNTUxIDMyLjcwMjFWMzIuOTQyM0M0OTMuMjIzIDMzLjEyOTggNDk0LjU5NiAzMy43MjI1IDQ5NS42NjEgMzQuNzI3NUM0OTYuNzI2IDM1LjcyNSA0OTcuMjU5IDM3LjEyNzQgNDk3LjI1OSAzOC45NDIzVjQyLjI2NDZDNDk3LjI1OSA0My44MzE4IDQ5Ny4zNjMgNDUuMDQ2NiA0OTcuNTgxIDQ1LjkwOTFDNDk3LjYzMyA0Ni4wOTY1IDQ5Ny41NjYgNDYuMTk0MiA0OTcuMzc5IDQ2LjE5NDNINDkyLjA2OEM0OTEuOTMzIDQ2LjE5NDIgNDkxLjg1MSA0Ni4xNDE3IDQ5MS44MjkgNDYuMDI5MkM0OTEuNjY0IDQ1LjYyNDIgNDkxLjU4OSA0NC43MTY4IDQ5MS41ODkgNDMuMzE0NFYzOS43OUM0OTEuNTg5IDM3Ljk4MjcgNDkxLjA5NCAzNi43NTI0IDQ5MC4xMTEgMzYuMTA3NEM0ODkuMTI5IDM1LjQ2MjQgNDg3LjU2OCAzNS4xMzE4IDQ4NS40MzEgMzUuMTMxOEg0NzYuNjAzVjQ1Ljk4NDNDNDc2LjYwMyA0Ni4xMTkyIDQ3Ni41MzYgNDYuMTg3NCA0NzYuNDAxIDQ2LjE4NzRINDcxLjEzNkM0NzEuMDAxIDQ2LjE4NzMgNDcwLjkzMyA0Ni4xMTkyIDQ3MC45MzMgNDUuOTg0M1YxNy44NDQ3QzQ3MC45MzMgMTcuNzA5OCA0NzEuMDAxIDE3LjY0MjYgNDcxLjEzNiAxNy42NDI1SDQ4Ni40NDNaTTUyMS42MzQgMTcuNjM0N0M1MjEuNzE2IDE3LjYzNDggNTIxLjc4MyAxNy42ODc0IDUyMS44MzYgMTcuNzk5N0w1MzIuNTMxIDQ1Ljk0NzJDNTMyLjU2MSA0NS45OTk2IDUzMi41NTQgNDYuMDUyNCA1MzIuNTA5IDQ2LjExMjJDNTMyLjQ3MSA0Ni4xNjQ2IDUzMi40MTkgNDYuMTk0MiA1MzIuMzY2IDQ2LjE5NDNINTI2Ljg1M0M1MjYuNzcxIDQ2LjE5NDMgNTI2LjcwNCA0Ni4xMjcxIDUyNi42NTEgNDUuOTkyMUw1MjQuMzA0IDM5LjcxNDhINTEwLjAwOUw1MDcuNjYxIDQ1Ljk5MjFDNTA3LjYwOSA0Ni4xMjcxIDUwNy41MjYgNDYuMTk0MyA1MDcuNDIxIDQ2LjE5NDNINTAxLjkxNkM1MDEuODYzIDQ2LjE5NDMgNTAxLjgxMSA0Ni4xNjQ3IDUwMS43NzMgNDYuMTEyMkM1MDEuNzM2IDQ2LjA1OTcgNTAxLjcyOCA0Ni4wMDcyIDUwMS43NTEgNDUuOTQ3Mkw1MTIuNDgzIDE3Ljc5OTdDNTEyLjUzNiAxNy42OTQ3IDUxMi42MTkgMTcuNjM0NyA1MTIuNzI0IDE3LjYzNDdINTIxLjYzNFpNNTk2LjMxMSAxNy42NDI1QzU5Ni40MTYgMTcuNjQyNiA1OTYuNDk5IDE3Ljc0NzMgNTk2LjU1MiAxNy45NjQ4VjIxLjc3NDNINTk2LjU0NEM1OTYuNTQ0IDIxLjg3OTIgNTk2LjUxNCAyMS45NjIxIDU5Ni40NjIgMjIuMDE0NkM1OTYuNDA5IDIyLjA2NjkgNTk2LjM1NyAyMi4wOTY1IDU5Ni4yOTcgMjIuMDk2Nkg1ODUuMzI0VjQ1Ljk5MjFDNTg1LjMyNCA0Ni4xMjcxIDU4NS4yNTYgNDYuMTk0MyA1ODUuMTIxIDQ2LjE5NDNINTc5Ljg1NkM1NzkuNzIxIDQ2LjE5NDMgNTc5LjY1NCA0Ni4xMjcxIDU3OS42NTQgNDUuOTkyMVYyMi4wOTY2SDU2OC42ODJDNTY4LjUxNyAyMi4wOTY2IDU2OC40NDEgMjEuOTkxOCA1NjguNDQxIDIxLjc3NDNWMTcuODg5NkM1NjguNDQxIDE3LjgzNzEgNTY4LjQ3MiAxNy43ODQ1IDU2OC41MjQgMTcuNzI0NUM1NjguNTc3IDE3LjY3MjMgNTY4LjYyOSAxNy42NDI3IDU2OC42ODggMTcuNjQyNUg1OTYuMzExWk0zMzkuODU3IDE3LjY0MjVDMzM5Ljk5MiAxNy42NDI2IDM0MC4wNTkgMTcuNzA5NyAzNDAuMDU5IDE3Ljg0NDdWMjEuNzc0M0MzNDAuMDU5IDIxLjk5MTcgMzM5Ljk5MiAyMi4wOTY1IDMzOS44NTcgMjIuMDk2NkgzMjMuNTM3VjI5LjQ2MThIMzM5LjA0N0MzMzkuMTgyIDI5LjQ2MTggMzM5LjI1IDI5LjUzIDMzOS4yNSAyOS42NjVWMzMuNzE0OEMzMzkuMjUgMzMuODQ5NiAzMzkuMTgyIDMzLjkxNjkgMzM5LjA0NyAzMy45MTY5SDMyMy41MzdWNDEuNzMyNEgzMzkuODU3QzMzOS45OTIgNDEuNzMyNCAzNDAuMDU5IDQxLjc5OTYgMzQwLjA1OSA0MS45MzQ1VjQ1Ljk4NDNDMzQwLjA1OSA0Ni4xMTkyIDMzOS45OTIgNDYuMTg3NCAzMzkuODU3IDQ2LjE4NzRIMzE4LjA2OUMzMTcuOTM0IDQ2LjE4NzMgMzE3Ljg2NyA0Ni4xMTkyIDMxNy44NjcgNDUuOTg0M1YxNy44NDQ3QzMxNy44NjcgMTcuNzA5OCAzMTcuOTM0IDE3LjY0MjYgMzE4LjA2OSAxNy42NDI1SDMzOS44NTdaTTYyMy40MjQgMTcuNjQyNUM2MjMuNTU5IDE3LjY0MjYgNjIzLjYyNiAxNy43MDk3IDYyMy42MjYgMTcuODQ0N1YyMS43NzQzQzYyMy42MjYgMjEuOTkxNyA2MjMuNTU5IDIyLjA5NjUgNjIzLjQyNCAyMi4wOTY2SDYwNy4xMDNWMjkuNDYxOEg2MjIuNjEzQzYyMi43NDggMjkuNDYxOCA2MjIuODE2IDI5LjUzIDYyMi44MTYgMjkuNjY1VjMzLjcxNDhDNjIyLjgxNiAzMy44NDk2IDYyMi43NDggMzMuOTE2OSA2MjIuNjEzIDMzLjkxNjlINjA3LjEwM1Y0MS43MzI0SDYyMy40MjRDNjIzLjU1OSA0MS43MzI0IDYyMy42MjYgNDEuNzk5NiA2MjMuNjI2IDQxLjkzNDVWNDUuOTg0M0M2MjMuNjI2IDQ2LjExOTIgNjIzLjU1OSA0Ni4xODc0IDYyMy40MjQgNDYuMTg3NEg2MDEuNjM2QzYwMS41MDEgNDYuMTg3MyA2MDEuNDMzIDQ2LjExOTIgNjAxLjQzMyA0NS45ODQzVjE3Ljg0NDdDNjAxLjQzMyAxNy43MDk4IDYwMS41MDEgMTcuNjQyNiA2MDEuNjM2IDE3LjY0MjVINjIzLjQyNFpNNS40NDUyIDQ1LjEyODhDLTIuNTExMDIgNDMuNzE0NyAxLjIzNzg5IDMyLjE0MjEgOC4yODcgMzUuNDY4N0MxMy4zNzEzIDM3Ljg2NTUgMTEuMDk5NiA0Ni4xMzQ0IDUuNDQ1MiA0NS4xMjg4Wk0yOS43MzMzIDQxLjY3OTZDMzAuOTkwMSA0MC42MDU4IDMyLjg2NzggNDIuMzk0NiAzMS41OTc1IDQzLjc3NTNDMzEuNDc5MyA0My45MDQ3IDMxLjIwOCA0NC4wNDQ3IDMxLjAzOCA0NC4wODc4QzI5LjY1NDIgNDQuNDI2OSAyOC41OTEgNDIuNjUyNyAyOS43MzMzIDQxLjY3OTZaTTIwLjIyNTUgNDAuMTg4NEMyMi4yNDMgMzguNDk5MiAyNS4yNTQ1IDQxLjMxMDQgMjMuMjE1NyA0My40ODI0QzIzLjAyNjIgNDMuNjg1NyAyMi41OTMyIDQzLjkwMzUgMjIuMzIwMiA0My45NzE2QzIwLjA5OCA0NC41MDcgMTguMzkxNCA0MS43MTk2IDIwLjIyNTUgNDAuMTg4NFpNMTguMjcyNCAzNC4wNTc1Qy0zLjE2NDA5IDIzLjYwODkgMTEuNzgyMiAtNy41MzIwOCAzMi42Mjk4IDEuNjgzNTJDNTUuMzU5NyAxMS43MzkyIDM5LjkyMTcgNDQuNjA0MyAxOC4yNzI0IDM0LjA1NzVaTTQxNy4zOTUgMjEuNTI3M0M0MTcuMjkgMjEuOTg0OSA0MTYuOTA4IDIzLjIzIDQxNi4yNjQgMjUuMjU0OEw0MTIuNDk4IDM1LjI1OTdINDIzLjQzM0w0MTkuNjY4IDI1LjI1NDhMNDE5LjMwMSAyNC4wNzcxQzQxOC45MjYgMjIuOTE0NyA0MTguNjYzIDIyLjA2NzMgNDE4LjUyOCAyMS41MjczSDQxNy4zOTVaTTUxNi41NTYgMjEuNTI3M0M1MTYuNDUxIDIxLjk4NDkgNTE2LjA2OSAyMy4yMyA1MTUuNDI0IDI1LjI1NDhMNTExLjY1OCAzNS4yNTk3SDUyMi41OTRMNTE4LjgyOCAyNS4yNTQ4TDUxOC40NjEgMjQuMDc3MUM1MTguMDg2IDIyLjkxNDcgNTE3LjgyMyAyMi4wNjczIDUxNy42ODggMjEuNTI3M0g1MTYuNTU2Wk0yOTAuMzI2IDMwLjY4NDVIMjk5Ljc2MkMzMDEuNDg3IDMwLjY4NDUgMzAyLjc3NyAzMC4zNzczIDMwMy42MzIgMjkuNzU0OEMzMDQuNDc5IDI5LjEzMjMgMzA0LjkwNiAyOC4wOTcxIDMwNC45MDYgMjYuNjM0N1YyNi4yMjk0QzMwNC45MDYgMjQuNzQ0NSAzMDQuNDY0IDIzLjY4NzIgMzAzLjU3MSAyMy4wNDk3QzMwMi42NzkgMjIuNDEyMyAzMDEuMjc2IDIyLjA5NjYgMjk5LjM1NiAyMi4wOTY2SDI5MC4zMjZWMzAuNjg0NVpNNDc2LjU5NiAzMC42ODQ1SDQ4Ni4wMzFDNDg3Ljc1NiAzMC42ODQ1IDQ4OS4wNDYgMzAuMzc3MyA0ODkuOTAxIDI5Ljc1NDhDNDkwLjc0OSAyOS4xMzIzIDQ5MS4xNzYgMjguMDk3MSA0OTEuMTc2IDI2LjYzNDdWMjYuMjI5NEM0OTEuMTc2IDI0Ljc0NDUgNDkwLjczMyAyMy42ODcyIDQ4OS44NDEgMjMuMDQ5N0M0ODguOTQ4IDIyLjQxMjMgNDg3LjU0NiAyMi4wOTY2IDQ4NS42MjYgMjIuMDk2Nkg0NzYuNTk2VjMwLjY4NDVaTTI3MS40NTMgMTYuNzY0NkMyNzIuMTU4IDE2Ljc2NDYgMjcyLjc3MyAxNi44ODQ0IDI3My4zMDYgMTcuMTMxOEMyNzMuODM4IDE3LjM3OTMgMjc0LjI1OCAxNy43NjI0IDI3NC41NTggMTguMjcyNEMyNzQuODU4IDE4Ljc4OTggMjc1LjAwOSAxOS40MjcyIDI3NS4wMDkgMjAuMTg0NVYyMC4yMjk0QzI3NS4wMDkgMjAuOTg2OSAyNzQuODU4IDIxLjYyNDcgMjc0LjU1OCAyMi4xMzQ3QzI3NC4yNTggMjIuNjQ0NyAyNzMuODM4IDIzLjAyNjggMjczLjMwNiAyMy4yNzQzQzI3Mi43NzMgMjMuNTIxOCAyNzIuMTU4IDIzLjY0OTMgMjcxLjQ1MyAyMy42NDkzQzI3MC43NDggMjMuNjQ5MyAyNzAuMTMzIDIzLjUyMTggMjY5LjYgMjMuMjc0M0MyNjkuMDY4IDIzLjAyNjkgMjY4LjY0OCAyMi42NDQ1IDI2OC4zNDkgMjIuMTM0N0MyNjguMDQ5IDIxLjYyNDcgMjY3Ljg5OCAyMC45ODY5IDI2Ny44OTggMjAuMjI5NFYyMC4xODQ1QzI2Ny44OTggMTkuNDI3MSAyNjguMDQ5IDE4Ljc4OTggMjY4LjM0OSAxOC4yNzI0QzI2OC42NDggMTcuNzYyNCAyNjkuMDY4IDE3LjM3OTMgMjY5LjYgMTcuMTMxOEMyNzAuMTMzIDE2Ljg5MTggMjcwLjc0OCAxNi43NjQ2IDI3MS40NTMgMTYuNzY0NlpNMjcxLjQ1MyAxNy40OTk5QzI3MC41NjggMTcuNSAyNjkuODkzIDE3LjcyNDUgMjY5LjQyMSAxOC4xNjY5QzI2OC45NDggMTguNjE2OSAyNjguNzE2IDE5LjI4NDQgMjY4LjcxNiAyMC4xNzY3VjIwLjI0NUMyNjguNzE2IDIxLjE0NDggMjY4Ljk0OCAyMS44MTI0IDI2OS40MjEgMjIuMjU0OEMyNjkuODg2IDIyLjY5NzIgMjcwLjU2MSAyMi45MjE4IDI3MS40NTMgMjIuOTIxOEMyNzIuMzQ1IDIyLjkyMTggMjczLjAyOCAyMi42OTcyIDI3My40OTMgMjIuMjU0OEMyNzMuOTU4IDIxLjgwNDkgMjc0LjE5MSAyMS4xMzczIDI3NC4xOTEgMjAuMjQ1VjIwLjE3NjdDMjc0LjE5MSAxOS4yNzY5IDI3My45NTggMTguNjA5NCAyNzMuNDkzIDE4LjE2NjlDMjczLjAyOCAxNy43MjQ2IDI3Mi4zMzggMTcuNDk5OSAyNzEuNDUzIDE3LjQ5OTlaTTI3MS43OTMgMTguNDgyNEMyNzIuMjI4IDE4LjQ4MjQgMjcyLjU0MiAxOC41NDk3IDI3Mi43NDUgMTguNjg0NUMyNzIuOTQ4IDE4LjgxOTUgMjczLjA0NiAxOS4wNDUgMjczLjA0NiAxOS4zNTI1VjE5LjQ1N0MyNzMuMDQ2IDE5LjcwNDUgMjcyLjk4NSAxOS45MDcyIDI3Mi44NjUgMjAuMDQ5N0MyNzIuNzQ1IDIwLjE5MjEgMjcyLjU5NSAyMC4yODIxIDI3Mi40MDggMjAuMzA0NlYyMC4zMzQ5QzI3Mi42MSAyMC4zNjQ5IDI3Mi43NzYgMjAuNDMyNyAyNzIuOTAzIDIwLjU1MjdDMjczLjAzIDIwLjY3MjYgMjczLjA5MSAyMC44MzggMjczLjA5MSAyMS4wNzAySDI3My4xMTNWMjEuNDY3N0MyNzMuMTEzIDIxLjY1NSAyNzMuMTI4IDIxLjc5NzMgMjczLjE1IDIxLjkwMjNDMjczLjE1IDIxLjkyNDggMjczLjEyIDIxLjkzOTQgMjczLjEyIDIxLjkzOTRIMjcyLjM4NkMyNzIuMzYzIDIxLjkzOTQgMjcyLjM1NSAyMS45MzE5IDI3Mi4zNTUgMjEuOTE2OUMyNzIuMzU1IDIxLjg2NDYgMjcyLjM0MSAyMS44MDQ4IDI3Mi4zNDEgMjEuNzQ1QzI3Mi4zMjYgMjEuNjg1IDI3Mi4zMjUgMjEuNTk0NyAyNzIuMzI1IDIxLjU5NDdWMjEuMTY2OUMyNzIuMzI1IDIwLjk0OTggMjcyLjI2NiAyMC44MDcgMjcyLjE1MyAyMC43NDdDMjcyLjA0MSAyMC42Nzk1IDI3MS44NTMgMjAuNjUwMyAyNzEuNTgzIDIwLjY1MDNIMjcwLjcwNVYyMS45MDIzQzI3MC43MDUgMjEuOTI0OCAyNzAuNjgyIDIxLjkzMjUgMjcwLjY4MiAyMS45MzI1SDI2OS45NDhDMjY5LjkyNiAyMS45MzI1IDI2OS45MTggMjEuOTAyMyAyNjkuOTE4IDIxLjkwMjNWMTguNTEyNkMyNjkuOTE4IDE4LjQ5MDEgMjY5Ljk0OCAxOC40ODI0IDI2OS45NDggMTguNDgyNEgyNzEuNzkzWk0yNzAuNjgyIDIwLjAyNzNIMjcxLjYzNkMyNzEuODUzIDIwLjAyNzIgMjcyLjAxMSAxOS45ODk2IDI3Mi4xMDggMTkuOTI5NkMyNzIuMjA2IDE5Ljg2MjEgMjcyLjI1OCAxOS43NDkzIDI3Mi4yNTggMTkuNTc3MVYxOS41NEMyNzIuMjU4IDE5LjM2NzcgMjcyLjIwNiAxOS4yNTUgMjcyLjEwOCAxOS4yMDk5QzI3Mi4wMTEgMTkuMTU3NCAyNzEuODM4IDE5LjEzNDcgMjcxLjU5MSAxOS4xMzQ3SDI3MC42ODJWMjAuMDI3M1oiIGZpbGw9IiNCODFEMjIiLz4KPC9zdmc+Cg==" alt="Ragga Restaurantes"></div>
+
+  <div class="masthead">
+    <div>
+      <h1>Pendências de contestação · iFood</h1>
+      <div class="sub">Pedidos cancelados nesta semana que eram elegíveis para contestação e não foram contestados — a lista que precisa de ação.</div>
+    </div>
+    <div class="meta">
+      <span class="tag">iFood</span><br>
+      Semana de 07 a 13/09/2026<br>
+      Reunião de equipe — <span id="hoje"></span>
+    </div>
+  </div>
+
+  <div class="kpi-strip" id="kpiStrip"></div>
+
+  <div class="split" id="splitBlock"></div>
+
+  <div class="motivos-overall">
+    <div class="sec-head"><h2>Principais motivos entre os pendentes</h2><div class="sec-line"></div></div>
+    <div id="motivosOverall"></div>
+  </div>
+
+  <div class="sec-head"><h2>Explorar pendências</h2><div class="sec-line"></div></div>
+  <div class="explorer">
+    <div class="sidebar">
+      <div class="mode-tabs" id="modeTabs">
+        <button class="mode-tab active" data-mode="loja">Por loja</button>
+        <button class="mode-tab" data-mode="marca">Por conta (BIGG'S 01, 02...)</button>
+      </div>
+      <div class="sidebar-head"><input type="text" id="searchLoja" placeholder="Buscar..."></div>
+      <div class="sidebar-list" id="lojaList"></div>
+    </div>
+    <div class="detail" id="detailPanel">
+      <div class="detail-empty"><span>🧾</span>Selecione um item na lista ao lado<br>para ver os pedidos pendentes.</div>
+    </div>
+  </div>
+
+  <div class="full-list">
+    <div class="sec-head"><h2>Lista completa · todos os pendentes</h2><div class="sec-line"></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Loja</th><th>Conta/Marca</th><th>Pedido</th><th>Data</th><th>Motivo</th><th>Valor</th><th>Classificação</th></tr></thead>
+        <tbody id="fullTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <span>Fonte: relatório de cancelamentos iFood · <span id="totalRegistros"></span> pedidos pendentes de contestação.</span>
+    <span>🟩 aprovado / reembolso iFood &nbsp; 🟧 erro da unidade</span>
+  </footer>
+
+</div>
+
+<script>
+const DATA = [{"marca": "BIGG'S 06", "loja": "CHINA BIGGS - AV. HIGIENÓPOLIS", "id_pedido": "4586", "data": "2026-09-13 20:26:12", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 32.79, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - POKE - AV. MARINGÁ", "id_pedido": "3123", "data": "2026-09-09 10:23:03", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 51.92, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 10", "loja": "PIZZA BIGGS 88", "id_pedido": "1487", "data": "2026-09-11 23:22:37", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 56.0, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 07", "loja": "BIGGS - ZONA LESTE", "id_pedido": "4419", "data": "2026-09-12 22:37:59", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 36.83, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 07", "loja": "BIGGS - ZONA LESTE", "id_pedido": "7829", "data": "2026-09-12 23:59:05", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 8.9, "negociacao": "SIM", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "BIGGS - ZONA LESTE", "id_pedido": "4338", "data": "2026-09-10 20:45:48", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 28.22, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 06", "loja": "BIGGS - JAPA & POKE -  AV. HIGIENÓPOLIS - CENTRO", "id_pedido": "3112", "data": "2026-09-13 20:34:49", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 33.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 05", "loja": "BIGGS - PIZZARIA - ZONA SUL", "id_pedido": "0423", "data": "2026-09-08 20:52:10", "turno": "JANTAR", "motivo": "O PEDIDO VEIO REVIRADO/VIOLADO", "valor": 101.88, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 12", "loja": "BIGGS - SAUL ELKIND", "id_pedido": "4739", "data": "2026-09-09 13:13:48", "turno": "ALMOÇO", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 8.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 11", "loja": "MARMITAS BIGGS - SANTO AMARO", "id_pedido": "3968", "data": "2026-09-13 21:31:18", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 0.35, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - BURGER - AV. MARINGÁ", "id_pedido": "4162", "data": "2026-09-10 13:21:36", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 39.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 04", "loja": "BIGGS - PASTEL - ZONA NORTE", "id_pedido": "6899", "data": "2026-09-10 16:23:12", "turno": "CAFÉ DA TARDE", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 8.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "BIGGS - PASTEL - ZONA LESTE", "id_pedido": "0257", "data": "2026-09-12 14:47:16", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 8.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 03", "loja": "BIGGS - CENTRO", "id_pedido": "7698", "data": "2026-09-13 18:06:39", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 18.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "CHINA BIGGS - ZONA LESTE", "id_pedido": "8709", "data": "2026-09-11 15:44:41", "turno": "CAFÉ DA TARDE", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 21.92, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 11", "loja": "BIGGS - SANTO AMARO", "id_pedido": "1942", "data": "2026-09-09 21:38:39", "turno": "JANTAR", "motivo": "PEDIDO IMPRÓPRIO PARA CONSUMO/USO", "valor": 7.0, "negociacao": "SIM", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - PIZZAS - AV. MARINGÁ", "id_pedido": "8079", "data": "2026-09-12 12:53:03", "turno": "ALMOÇO", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 26.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - PIZZAS - AV. MARINGÁ", "id_pedido": "1855", "data": "2026-09-10 19:48:39", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 8.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 10", "loja": "LANCHES BIGGS 88", "id_pedido": "3124", "data": "2026-09-11 23:55:16", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 18.17, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS DELIVERY - GLEBA PALHANO", "id_pedido": "5336", "data": "2026-09-12 19:56:28", "turno": "JANTAR", "motivo": "PEDIDO IMPRÓPRIO PARA CONSUMO/USO", "valor": 38.91, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}];
+
+document.getElementById('hoje').textContent = new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'});
+function fmtBRL(v){ return v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const total = DATA.length;
+const valorTotal = DATA.reduce((a,d)=>a+d.valor,0);
+const green = DATA.filter(d=>d.classe==='GREEN');
+const orange = DATA.filter(d=>d.classe==='ORANGE');
+const valorGreen = green.reduce((a,d)=>a+d.valor,0);
+const valorOrange = orange.reduce((a,d)=>a+d.valor,0);
+const lojasAfetadas = new Set(DATA.map(d=>d.loja)).size;
+
+document.getElementById('totalRegistros').textContent = total;
+
+document.getElementById('kpiStrip').innerHTML = `
+  <div class="kpi warn"><div class="k-label">Pedidos sem contestação</div><div class="k-val num">${total}</div><div class="k-sub">R$ ${fmtBRL(valorTotal)} em jogo</div></div>
+  <div class="kpi"><div class="k-label">Aprovaria / iFood</div><div class="k-val num" style="color:var(--green)">${green.length}</div><div class="k-sub">R$ ${fmtBRL(valorGreen)} deixados na mesa</div></div>
+  <div class="kpi"><div class="k-label">Erro da unidade</div><div class="k-val num" style="color:var(--orange)">${orange.length}</div><div class="k-sub">R$ ${fmtBRL(valorOrange)}</div></div>
+  <div class="kpi"><div class="k-label">Lojas envolvidas</div><div class="k-val num">${lojasAfetadas}</div><div class="k-sub">com ao menos 1 pendência</div></div>
+`;
+
+document.getElementById('splitBlock').innerHTML = `
+  <div class="split-item">
+    <div class="s-title"><span class="split-dot" style="background:var(--green)"></span>Aprovado pelo iFood (sem culpa da unidade)</div>
+    <div class="s-val num">${green.length} pedidos · R$ ${fmtBRL(valorGreen)}</div>
+    <div class="s-desc">Reembolso que o iFood teria concedido — esse valor só não foi recuperado porque a contestação não foi aberta a tempo.</div>
+  </div>
+  <div class="split-item">
+    <div class="s-title"><span class="split-dot" style="background:var(--orange)"></span>Erro da unidade</div>
+    <div class="s-val num">${orange.length} pedidos · R$ ${fmtBRL(valorOrange)}</div>
+    <div class="s-desc">Cancelamento causado pela própria loja — não é erro de cliente nem falha logística. Ponto de atenção operacional.</div>
+  </div>
+`;
+
+function topMotivos(rows, n){
+  const map = {};
+  rows.forEach(d=>{
+    if(!d.motivo || d.motivo==='-') return;
+    map[d.motivo] = map[d.motivo] || {count:0, valor:0};
+    map[d.motivo].count++; map[d.motivo].valor += d.valor;
+  });
+  return Object.entries(map).sort((a,b)=>b[1].count-a[1].count).slice(0,n);
+}
+function renderMotivos(el, rows, n){
+  const list = topMotivos(rows, n);
+  const max = list.length ? list[0][1].count : 1;
+  el.innerHTML = list.map(([motivo,v])=>`
+    <div class="m-row">
+      <div class="m-label">${esc(motivo)}</div>
+      <div class="m-bar-track"><div class="m-bar-fill" style="width:${(v.count/max*100).toFixed(0)}%"></div></div>
+      <div class="m-val num">${v.count} · R$ ${fmtBRL(v.valor)}</div>
+    </div>`).join('') || '<div class="m-label" style="color:var(--ink-faint)">Sem motivos registrados.</div>';
+}
+renderMotivos(document.getElementById('motivosOverall'), DATA, 6);
+
+// ---------- Grouping (by loja, or by conta/marca — column A) ----------
+function buildGroups(byField, otherField){
+  const map = {};
+  DATA.forEach(d=>{
+    const key = d[byField];
+    if(!map[key]) map[key] = {key, others:new Set(), rows:[], valor:0};
+    map[key].others.add(d[otherField]);
+    map[key].rows.push(d);
+    map[key].valor += d.valor;
+  });
+  return map;
+}
+
+const groupsByLoja = buildGroups('loja','marca');
+const groupsByMarca = buildGroups('marca','loja');
+
+let groupMode = 'loja'; // 'loja' | 'marca'
+let activeKey = null;
+
+function currentMap(){ return groupMode==='loja' ? groupsByLoja : groupsByMarca; }
+function otherLabel(){ return groupMode==='loja' ? "Conta(s) / marca(s)" : "Loja(s) atendida(s)"; }
+function itemLabel(){ return groupMode==='loja' ? 'loja' : 'conta'; }
+
+function renderList(filter){
+  const map = currentMap();
+  let groups = Object.values(map).map(g=>({
+    ...g,
+    hasGreen: g.rows.some(d=>d.classe==='GREEN'),
+    hasOrange: g.rows.some(d=>d.classe==='ORANGE'),
+  }));
+  groups.sort((a,b)=> b.valor - a.valor);
+  const filtered = groups.filter(g => g.key.toLowerCase().includes((filter||'').toLowerCase()));
+  const listEl = document.getElementById('lojaList');
+  listEl.innerHTML = filtered.map(g=>`
+    <button class="loja-item ${activeKey===g.key?'active':''}" data-key="${esc(g.key)}">
+      <div class="li-name">${esc(g.key)}</div>
+      <div class="li-meta"><span>${g.rows.length} pendente(s)</span><span class="li-val">R$ ${fmtBRL(g.valor)}</span></div>
+      <div class="li-badges">
+        ${g.hasGreen?'<span class="li-badge" style="background:var(--green)"></span>':''}
+        ${g.hasOrange?'<span class="li-badge" style="background:var(--orange)"></span>':''}
+      </div>
+    </button>`).join('') || `<div style="padding:14px;color:var(--ink-faint);font-size:12.5px;">Nenhuma ${itemLabel()} encontrada.</div>`;
+
+  listEl.querySelectorAll('.loja-item').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeKey = btn.getAttribute('data-key');
+      renderList(document.getElementById('searchLoja').value);
+      renderDetail(activeKey);
+    });
+  });
+}
+
+function renderDetail(key){
+  const map = currentMap();
+  const g = map[key];
+  const panel = document.getElementById('detailPanel');
+  if(!g){ panel.innerHTML = `<div class="detail-empty"><span>🧾</span>Selecione uma ${itemLabel()} na lista ao lado.</div>`; return; }
+  const rows = g.rows.slice().sort((a,b)=> b.data.localeCompare(a.data));
+  const othersHtml = Array.from(g.others).map(m=>`<span class="marca-badge">${esc(m)}</span>`).join('');
+  const gCount = rows.filter(d=>d.classe==='GREEN').length;
+  const oCount = rows.filter(d=>d.classe==='ORANGE').length;
+  const otherCol = groupMode==='loja' ? 'Conta/marca' : 'Loja';
+  const otherField = groupMode==='loja' ? 'marca' : 'loja';
+
+  panel.innerHTML = `
+    <div class="detail-head">
+      <h3>${esc(g.key)}</h3>
+      <div style="font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:6px;">${otherLabel()}</div>
+      <div class="marca-badges">${othersHtml}</div>
+    </div>
+    <div class="detail-kpis">
+      <div class="dk"><div class="dk-label">Valor pendente</div><div class="dk-val num" style="color:var(--ifood)">R$ ${fmtBRL(g.valor)}</div></div>
+      <div class="dk"><div class="dk-label">Aprovaria / iFood</div><div class="dk-val num" style="color:var(--green)">${gCount}</div></div>
+      <div class="dk"><div class="dk-label">Erro da unidade</div><div class="dk-val num" style="color:var(--orange)">${oCount}</div></div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Data</th><th>${otherCol}</th><th>Turno</th><th>Motivo</th><th>Valor</th><th>Classificação</th></tr></thead>
+        <tbody>
+          ${rows.map(d=>{
+            const dt = new Date(d.data.replace(' ','T'));
+            const dataFmt = dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) + ' ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+            const rowClass = d.classe==='GREEN' ? 'row-green' : (d.classe==='ORANGE' ? 'row-orange' : '');
+            const pill = d.classe==='GREEN' ? '<span class="tag-pill tag-green">aprovaria · iFood</span>' :
+                         d.classe==='ORANGE' ? '<span class="tag-pill tag-orange">erro da unidade</span>' : '—';
+            return `<tr class="${rowClass}">
+              <td class="num">${dataFmt}</td>
+              <td>${esc(d[otherField])}</td>
+              <td>${esc(d.turno)}</td>
+              <td>${esc(d.motivo)}</td>
+              <td class="valor-cell num">R$ ${fmtBRL(d.valor)}</td>
+              <td>${pill}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+document.getElementById('searchLoja').addEventListener('input', (e)=> renderList(e.target.value));
+document.getElementById('modeTabs').querySelectorAll('.mode-tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    groupMode = btn.getAttribute('data-mode');
+    activeKey = null;
+    document.getElementById('modeTabs').querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b===btn));
+    document.getElementById('searchLoja').placeholder = groupMode==='loja' ? 'Buscar loja...' : "Buscar conta (ex: BIGG'S 07)...";
+    document.getElementById('searchLoja').value = '';
+    renderList('');
+    document.getElementById('detailPanel').innerHTML = `<div class="detail-empty"><span>🧾</span>Selecione uma ${itemLabel()} na lista ao lado<br>para ver os pedidos pendentes.</div>`;
+  });
+});
+renderList('');
+
+// full list at bottom, sorted by value desc
+const sortedAll = DATA.slice().sort((a,b)=> b.valor - a.valor);
+document.getElementById('fullTableBody').innerHTML = sortedAll.map(d=>{
+  const dt = new Date(d.data.replace(' ','T'));
+  const dataFmt = dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  const rowClass = d.classe==='GREEN' ? 'row-green' : (d.classe==='ORANGE' ? 'row-orange' : '');
+  const pill = d.classe==='GREEN' ? '<span class="tag-pill tag-green">aprovaria · iFood</span>' :
+               d.classe==='ORANGE' ? '<span class="tag-pill tag-orange">erro da unidade</span>' : '—';
+  return `<tr class="${rowClass}">
+    <td>${esc(d.loja)}</td>
+    <td class="num">${esc(d.marca)}</td>
+    <td class="num">#${esc(d.id_pedido)}</td>
+    <td class="num">${dataFmt}</td>
+    <td>${esc(d.motivo)}</td>
+    <td class="valor-cell num">R$ ${fmtBRL(d.valor)}</td>
+    <td>${pill}</td>
+  </tr>`;
+}).join('');
+</script>
+</body>
+</html>
