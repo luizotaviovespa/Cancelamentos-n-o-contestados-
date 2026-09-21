@@ -56,6 +56,13 @@
   .masthead .meta{text-align:right; font-size:12.5px; color:var(--ink-faint); font-family:"IBM Plex Mono",monospace; line-height:1.6;}
   .meta .tag{display:inline-block; background:var(--ifood); color:#fff; font-weight:600; padding:3px 8px; border-radius:2px; font-family:"IBM Plex Sans",sans-serif; font-size:11.5px; letter-spacing:0.03em;}
 
+  .week-tabs{display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--rule); background:var(--paper-raised); margin-bottom:22px;}
+  .week-tab{padding:10px 16px; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500;
+    background:none; color:var(--ink-soft); border:none; border-right:1px dashed var(--rule-strong); cursor:pointer;}
+  .week-tab:last-child{border-right:none;}
+  .week-tab:hover{color:var(--ink); background:var(--paper);}
+  .week-tab.active{color:#fff; background:var(--ifood); font-weight:600;}
+
   .kpi-strip{display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--rule); background:var(--paper-raised); margin-bottom:22px;}
   .kpi{padding:16px; border-right:1px dashed var(--rule-strong);}
   .kpi:last-child{border-right:none;}
@@ -146,14 +153,16 @@
   <div class="masthead">
     <div>
       <h1>Pendências de contestação · iFood</h1>
-      <div class="sub">Pedidos cancelados nesta semana que eram elegíveis para contestação e não foram contestados — a lista que precisa de ação.</div>
+      <div class="sub">Pedidos cancelados que eram elegíveis para contestação e não foram contestados — a lista que precisa de ação. Use o filtro de semana abaixo para focar num período.</div>
     </div>
     <div class="meta">
       <span class="tag">iFood</span><br>
-      Semana de 07 a 13/09/2026<br>
+      <span id="weekRangeLabel">Todas as semanas</span><br>
       Reunião de equipe — <span id="hoje"></span>
     </div>
   </div>
+
+  <div class="week-tabs" id="weekTabs"></div>
 
   <div class="kpi-strip" id="kpiStrip"></div>
 
@@ -183,7 +192,7 @@
     <div class="sec-head"><h2>Lista completa · todos os pendentes</h2><div class="sec-line"></div></div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Loja</th><th>Conta/Marca</th><th>Pedido</th><th>Data</th><th>Motivo</th><th>Valor</th><th>Classificação</th></tr></thead>
+        <thead><tr><th>Loja</th><th>Conta/Marca</th><th>Pedido</th><th>Semana</th><th>Data</th><th>Motivo</th><th>Valor</th><th>Classificação</th></tr></thead>
         <tbody id="fullTableBody"></tbody>
       </table>
     </div>
@@ -197,42 +206,59 @@
 </div>
 
 <script>
-const DATA = [{"marca": "BIGG'S 06", "loja": "CHINA BIGGS - AV. HIGIENÓPOLIS", "id_pedido": "4586", "data": "2026-09-13 20:26:12", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 32.79, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - POKE - AV. MARINGÁ", "id_pedido": "3123", "data": "2026-09-09 10:23:03", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 51.92, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 10", "loja": "PIZZA BIGGS 88", "id_pedido": "1487", "data": "2026-09-11 23:22:37", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 56.0, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 07", "loja": "BIGGS - ZONA LESTE", "id_pedido": "4419", "data": "2026-09-12 22:37:59", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 36.83, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 07", "loja": "BIGGS - ZONA LESTE", "id_pedido": "7829", "data": "2026-09-12 23:59:05", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 8.9, "negociacao": "SIM", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "BIGGS - ZONA LESTE", "id_pedido": "4338", "data": "2026-09-10 20:45:48", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 28.22, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 06", "loja": "BIGGS - JAPA & POKE -  AV. HIGIENÓPOLIS - CENTRO", "id_pedido": "3112", "data": "2026-09-13 20:34:49", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 33.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 05", "loja": "BIGGS - PIZZARIA - ZONA SUL", "id_pedido": "0423", "data": "2026-09-08 20:52:10", "turno": "JANTAR", "motivo": "O PEDIDO VEIO REVIRADO/VIOLADO", "valor": 101.88, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 12", "loja": "BIGGS - SAUL ELKIND", "id_pedido": "4739", "data": "2026-09-09 13:13:48", "turno": "ALMOÇO", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 8.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 11", "loja": "MARMITAS BIGGS - SANTO AMARO", "id_pedido": "3968", "data": "2026-09-13 21:31:18", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 0.35, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - BURGER - AV. MARINGÁ", "id_pedido": "4162", "data": "2026-09-10 13:21:36", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 39.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 04", "loja": "BIGGS - PASTEL - ZONA NORTE", "id_pedido": "6899", "data": "2026-09-10 16:23:12", "turno": "CAFÉ DA TARDE", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 8.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "BIGGS - PASTEL - ZONA LESTE", "id_pedido": "0257", "data": "2026-09-12 14:47:16", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 8.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 03", "loja": "BIGGS - CENTRO", "id_pedido": "7698", "data": "2026-09-13 18:06:39", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 18.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "CHINA BIGGS - ZONA LESTE", "id_pedido": "8709", "data": "2026-09-11 15:44:41", "turno": "CAFÉ DA TARDE", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 21.92, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 11", "loja": "BIGGS - SANTO AMARO", "id_pedido": "1942", "data": "2026-09-09 21:38:39", "turno": "JANTAR", "motivo": "PEDIDO IMPRÓPRIO PARA CONSUMO/USO", "valor": 7.0, "negociacao": "SIM", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - PIZZAS - AV. MARINGÁ", "id_pedido": "8079", "data": "2026-09-12 12:53:03", "turno": "ALMOÇO", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 26.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - PIZZAS - AV. MARINGÁ", "id_pedido": "1855", "data": "2026-09-10 19:48:39", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 8.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 10", "loja": "LANCHES BIGGS 88", "id_pedido": "3124", "data": "2026-09-11 23:55:16", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 18.17, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS DELIVERY - GLEBA PALHANO", "id_pedido": "5336", "data": "2026-09-12 19:56:28", "turno": "JANTAR", "motivo": "PEDIDO IMPRÓPRIO PARA CONSUMO/USO", "valor": 38.91, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}];
+const DATA = [{"marca": "BIGG'S 06", "loja": "CHINA BIGGS - AV. HIGIENÓPOLIS", "id_pedido": "4586", "data": "2026-09-13 20:26:12", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 32.79, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - POKE - AV. MARINGÁ", "id_pedido": "3123", "data": "2026-09-09 10:23:03", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 51.92, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 10", "loja": "PIZZA BIGGS 88", "id_pedido": "1487", "data": "2026-09-11 23:22:37", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 56.0, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 07", "loja": "BIGGS - ZONA LESTE", "id_pedido": "4419", "data": "2026-09-12 22:37:59", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 36.83, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 07", "loja": "BIGGS - ZONA LESTE", "id_pedido": "7829", "data": "2026-09-12 23:59:05", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 8.9, "negociacao": "SIM", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "BIGGS - ZONA LESTE", "id_pedido": "4338", "data": "2026-09-10 20:45:48", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 28.22, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 06", "loja": "BIGGS - JAPA & POKE -  AV. HIGIENÓPOLIS - CENTRO", "id_pedido": "3112", "data": "2026-09-13 20:34:49", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 33.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 05", "loja": "BIGGS - PIZZARIA - ZONA SUL", "id_pedido": "0423", "data": "2026-09-08 20:52:10", "turno": "JANTAR", "motivo": "O PEDIDO VEIO REVIRADO/VIOLADO", "valor": 101.88, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 12", "loja": "BIGGS - SAUL ELKIND", "id_pedido": "4739", "data": "2026-09-09 13:13:48", "turno": "ALMOÇO", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 8.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 11", "loja": "MARMITAS BIGGS - SANTO AMARO", "id_pedido": "3968", "data": "2026-09-13 21:31:18", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 0.35, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - BURGER - AV. MARINGÁ", "id_pedido": "4162", "data": "2026-09-10 13:21:36", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 39.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 04", "loja": "BIGGS - PASTEL - ZONA NORTE", "id_pedido": "6899", "data": "2026-09-10 16:23:12", "turno": "CAFÉ DA TARDE", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 8.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "BIGGS - PASTEL - ZONA LESTE", "id_pedido": "0257", "data": "2026-09-12 14:47:16", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 8.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 03", "loja": "BIGGS - CENTRO", "id_pedido": "7698", "data": "2026-09-13 18:06:39", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 18.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "CHINA BIGGS - ZONA LESTE", "id_pedido": "8709", "data": "2026-09-11 15:44:41", "turno": "CAFÉ DA TARDE", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 21.92, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 11", "loja": "BIGGS - SANTO AMARO", "id_pedido": "1942", "data": "2026-09-09 21:38:39", "turno": "JANTAR", "motivo": "PEDIDO IMPRÓPRIO PARA CONSUMO/USO", "valor": 7.0, "negociacao": "SIM", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - PIZZAS - AV. MARINGÁ", "id_pedido": "8079", "data": "2026-09-12 12:53:03", "turno": "ALMOÇO", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 26.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "ISAIAS 01", "loja": "ISAIAS - PIZZAS - AV. MARINGÁ", "id_pedido": "1855", "data": "2026-09-10 19:48:39", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 8.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 10", "loja": "LANCHES BIGGS 88", "id_pedido": "3124", "data": "2026-09-11 23:55:16", "turno": "JANTAR", "motivo": "O ENDEREÇO ESTÁ INCOMPLETO E O CLIENTE NÃO ATENDE", "valor": 18.17, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "ISAIAS 01", "loja": "ISAIAS DELIVERY - GLEBA PALHANO", "id_pedido": "5336", "data": "2026-09-12 19:56:28", "turno": "JANTAR", "motivo": "PEDIDO IMPRÓPRIO PARA CONSUMO/USO", "valor": 38.91, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "ISAIAS 01", "loja": "PIZZA BIGGS - GLEBA PALHANO", "id_pedido": "9582", "data": "2026-09-18 19:26:53", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 64.78, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 08", "loja": "BIGGS - PIZZAS E MASSAS - PARANAGUÁ", "id_pedido": "0429", "data": "2026-09-17 18:59:01", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 58.06, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 13", "loja": "BIGGS - AV. ARTHUR THOMAS", "id_pedido": "1352", "data": "2026-09-15 13:08:55", "turno": "ALMOÇO", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 0.35, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 13", "loja": "BIGGS - AV. ARTHUR THOMAS", "id_pedido": "5942", "data": "2026-09-14 00:25:52", "turno": "MADRUGADA", "motivo": "O PEDIDO NÃO FOI ENTREGUE", "valor": 32.2, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 06", "loja": "BIGGS - JAPA & POKE -  AV. HIGIENÓPOLIS - CENTRO", "id_pedido": "5117", "data": "2026-09-15 21:24:49", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 69.46, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "BIGGS - AÇAÍ", "id_pedido": "7146", "data": "2026-09-20 19:45:50", "turno": "JANTAR", "motivo": "A FORMA DE PAGAMENTO ESTÁ ERRADA", "valor": 27.92, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 05", "loja": "BIGGS - ZONA SUL", "id_pedido": "9296", "data": "2026-09-20 20:34:45", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 28.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 05", "loja": "BIGGS - ZONA SUL", "id_pedido": "8381", "data": "2026-09-19 14:05:07", "turno": "ALMOÇO", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 4.9, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 05", "loja": "BIGGS - ZONA SUL", "id_pedido": "2813", "data": "2026-09-17 12:16:11", "turno": "ALMOÇO", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 9.8, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 12", "loja": "BIGGS - SAUL ELKIND", "id_pedido": "7324", "data": "2026-09-17 19:18:50", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 14.98, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 11", "loja": "PIZZA BIGGS - SANTO AMARO - CAMBÉ", "id_pedido": "2580", "data": "2026-09-20 20:06:26", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 46.0, "negociacao": "SIM", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 04", "loja": "BIGGS - ZONA NORTE", "id_pedido": "7817", "data": "2026-09-17 15:57:21", "turno": "CAFÉ DA TARDE", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 7.0, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 04", "loja": "BIGGS - ZONA NORTE", "id_pedido": "5397", "data": "2026-09-16 22:38:24", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 2.75, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 04", "loja": "BIGGS - ZONA NORTE", "id_pedido": "4194", "data": "2026-09-15 13:02:26", "turno": "ALMOÇO", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 17.89, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "BIGG'S 01", "loja": "BIGG’S LANCHES & REFEIÇÕES - GLEBA PALHANO", "id_pedido": "8650", "data": "2026-09-15 00:37:33", "turno": "MADRUGADA", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 38.76, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 01", "loja": "BIGG’S LANCHES & REFEIÇÕES - GLEBA PALHANO", "id_pedido": "8522", "data": "2026-09-14 17:02:13", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 19.79, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 07", "loja": "CHINA BIGGS - ZONA LESTE", "id_pedido": "8033", "data": "2026-09-15 20:28:56", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 19.91, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}, {"marca": "BIGG'S 11", "loja": "BIGGS - SANTO AMARO", "id_pedido": "0695", "data": "2026-09-20 19:07:14", "turno": "JANTAR", "motivo": "PARTE DO ITEM OU INTEGRANTE DE UM GRUPO NÃO FOI ENVIADO", "valor": 21.25, "negociacao": "NÃO", "contestavel": "SIM", "solicitou": "NÃO", "classe": "GREEN"}, {"marca": "ISAIAS 03", "loja": "ISAIAS DELIVERY - GLEBA PALHANO", "id_pedido": "6708", "data": "2026-09-17 22:32:46", "turno": "JANTAR", "motivo": "PEDIDO OU ITEM VEIO ERRADO", "valor": 32.89, "negociacao": "SIM", "contestavel": "SIM", "solicitou": "NÃO", "classe": "ORANGE"}];
 
 document.getElementById('hoje').textContent = new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'});
 function fmtBRL(v){ return v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-const total = DATA.length;
-const valorTotal = DATA.reduce((a,d)=>a+d.valor,0);
-const green = DATA.filter(d=>d.classe==='GREEN');
-const orange = DATA.filter(d=>d.classe==='ORANGE');
-const valorGreen = green.reduce((a,d)=>a+d.valor,0);
-const valorOrange = orange.reduce((a,d)=>a+d.valor,0);
-const lojasAfetadas = new Set(DATA.map(d=>d.loja)).size;
+// ---------- Week helpers (Monday–Sunday) ----------
+function weekInfo(dateStr){
+  const dt = new Date(dateStr.replace(' ','T'));
+  const day = dt.getDay(); // 0=Sun..6=Sat
+  const diffToMonday = (day===0 ? -6 : 1-day);
+  const monday = new Date(dt); monday.setHours(0,0,0,0); monday.setDate(dt.getDate()+diffToMonday);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  const key = monday.toISOString().slice(0,10);
+  const fmt = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  const yearLabel = monday.getFullYear()===sunday.getFullYear() ? '/'+sunday.getFullYear() : '';
+  const label = `${fmt(monday)} a ${fmt(sunday)}${yearLabel}`;
+  return {key, label, monday};
+}
+DATA.forEach(d=>{ const w = weekInfo(d.data); d._weekKey = w.key; d._weekLabel = w.label; });
 
-document.getElementById('totalRegistros').textContent = total;
+const weeks = Array.from(new Set(DATA.map(d=>d._weekKey)))
+  .map(key => ({key, label: DATA.find(d=>d._weekKey===key)._weekLabel}))
+  .sort((a,b)=> a.key.localeCompare(b.key));
 
-document.getElementById('kpiStrip').innerHTML = `
-  <div class="kpi warn"><div class="k-label">Pedidos sem contestação</div><div class="k-val num">${total}</div><div class="k-sub">R$ ${fmtBRL(valorTotal)} em jogo</div></div>
-  <div class="kpi"><div class="k-label">Aprovaria / iFood</div><div class="k-val num" style="color:var(--green)">${green.length}</div><div class="k-sub">R$ ${fmtBRL(valorGreen)} deixados na mesa</div></div>
-  <div class="kpi"><div class="k-label">Erro da unidade</div><div class="k-val num" style="color:var(--orange)">${orange.length}</div><div class="k-sub">R$ ${fmtBRL(valorOrange)}</div></div>
-  <div class="kpi"><div class="k-label">Lojas envolvidas</div><div class="k-val num">${lojasAfetadas}</div><div class="k-sub">com ao menos 1 pendência</div></div>
-`;
+let selectedWeek = 'all';
 
-document.getElementById('splitBlock').innerHTML = `
-  <div class="split-item">
-    <div class="s-title"><span class="split-dot" style="background:var(--green)"></span>Aprovado pelo iFood (sem culpa da unidade)</div>
-    <div class="s-val num">${green.length} pedidos · R$ ${fmtBRL(valorGreen)}</div>
-    <div class="s-desc">Reembolso que o iFood teria concedido — esse valor só não foi recuperado porque a contestação não foi aberta a tempo.</div>
-  </div>
-  <div class="split-item">
-    <div class="s-title"><span class="split-dot" style="background:var(--orange)"></span>Erro da unidade</div>
-    <div class="s-val num">${orange.length} pedidos · R$ ${fmtBRL(valorOrange)}</div>
-    <div class="s-desc">Cancelamento causado pela própria loja — não é erro de cliente nem falha logística. Ponto de atenção operacional.</div>
-  </div>
-`;
+function renderWeekTabs(){
+  const el = document.getElementById('weekTabs');
+  const tabs = [{key:'all', label:'Todas as semanas'}, ...weeks];
+  el.innerHTML = tabs.map(w=>`<button class="week-tab ${selectedWeek===w.key?'active':''}" data-week="${w.key}">${w.label}</button>`).join('');
+  el.querySelectorAll('.week-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      selectedWeek = btn.getAttribute('data-week');
+      activeKey = null;
+      renderWeekTabs();
+      renderAll();
+    });
+  });
+}
 
+function scopedData(){
+  return selectedWeek==='all' ? DATA : DATA.filter(d=>d._weekKey===selectedWeek);
+}
+
+function updateWeekRangeLabel(){
+  const label = selectedWeek==='all'
+    ? (weeks.length ? `Todas as semanas (${weeks[0].label.split(' a ')[0]} — ${weeks[weeks.length-1].label})` : 'Todas as semanas')
+    : `Semana de ${weeks.find(w=>w.key===selectedWeek).label}`;
+  document.getElementById('weekRangeLabel').textContent = label;
+}
+
+// ---------- Top motivos ----------
 function topMotivos(rows, n){
   const map = {};
   rows.forEach(d=>{
@@ -252,12 +278,11 @@ function renderMotivos(el, rows, n){
       <div class="m-val num">${v.count} · R$ ${fmtBRL(v.valor)}</div>
     </div>`).join('') || '<div class="m-label" style="color:var(--ink-faint)">Sem motivos registrados.</div>';
 }
-renderMotivos(document.getElementById('motivosOverall'), DATA, 6);
 
 // ---------- Grouping (by loja, or by conta/marca — column A) ----------
-function buildGroups(byField, otherField){
+function buildGroups(rows, byField, otherField){
   const map = {};
-  DATA.forEach(d=>{
+  rows.forEach(d=>{
     const key = d[byField];
     if(!map[key]) map[key] = {key, others:new Set(), rows:[], valor:0};
     map[key].others.add(d[otherField]);
@@ -267,13 +292,13 @@ function buildGroups(byField, otherField){
   return map;
 }
 
-const groupsByLoja = buildGroups('loja','marca');
-const groupsByMarca = buildGroups('marca','loja');
-
 let groupMode = 'loja'; // 'loja' | 'marca'
 let activeKey = null;
 
-function currentMap(){ return groupMode==='loja' ? groupsByLoja : groupsByMarca; }
+function currentMap(){
+  const rows = scopedData();
+  return groupMode==='loja' ? buildGroups(rows,'loja','marca') : buildGroups(rows,'marca','loja');
+}
 function otherLabel(){ return groupMode==='loja' ? "Conta(s) / marca(s)" : "Loja(s) atendida(s)"; }
 function itemLabel(){ return groupMode==='loja' ? 'loja' : 'conta'; }
 
@@ -295,7 +320,7 @@ function renderList(filter){
         ${g.hasGreen?'<span class="li-badge" style="background:var(--green)"></span>':''}
         ${g.hasOrange?'<span class="li-badge" style="background:var(--orange)"></span>':''}
       </div>
-    </button>`).join('') || `<div style="padding:14px;color:var(--ink-faint);font-size:12.5px;">Nenhuma ${itemLabel()} encontrada.</div>`;
+    </button>`).join('') || `<div style="padding:14px;color:var(--ink-faint);font-size:12.5px;">Nenhuma ${itemLabel()} encontrada neste período.</div>`;
 
   listEl.querySelectorAll('.loja-item').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -331,7 +356,7 @@ function renderDetail(key){
     </div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Data</th><th>${otherCol}</th><th>Turno</th><th>Motivo</th><th>Valor</th><th>Classificação</th></tr></thead>
+        <thead><tr><th>Data</th><th>Semana</th><th>${otherCol}</th><th>Turno</th><th>Motivo</th><th>Valor</th><th>Classificação</th></tr></thead>
         <tbody>
           ${rows.map(d=>{
             const dt = new Date(d.data.replace(' ','T'));
@@ -341,6 +366,7 @@ function renderDetail(key){
                          d.classe==='ORANGE' ? '<span class="tag-pill tag-orange">erro da unidade</span>' : '—';
             return `<tr class="${rowClass}">
               <td class="num">${dataFmt}</td>
+              <td class="num">${d._weekLabel}</td>
               <td>${esc(d[otherField])}</td>
               <td>${esc(d.turno)}</td>
               <td>${esc(d.motivo)}</td>
@@ -366,26 +392,66 @@ document.getElementById('modeTabs').querySelectorAll('.mode-tab').forEach(btn=>{
     document.getElementById('detailPanel').innerHTML = `<div class="detail-empty"><span>🧾</span>Selecione uma ${itemLabel()} na lista ao lado<br>para ver os pedidos pendentes.</div>`;
   });
 });
-renderList('');
 
-// full list at bottom, sorted by value desc
-const sortedAll = DATA.slice().sort((a,b)=> b.valor - a.valor);
-document.getElementById('fullTableBody').innerHTML = sortedAll.map(d=>{
-  const dt = new Date(d.data.replace(' ','T'));
-  const dataFmt = dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-  const rowClass = d.classe==='GREEN' ? 'row-green' : (d.classe==='ORANGE' ? 'row-orange' : '');
-  const pill = d.classe==='GREEN' ? '<span class="tag-pill tag-green">aprovaria · iFood</span>' :
-               d.classe==='ORANGE' ? '<span class="tag-pill tag-orange">erro da unidade</span>' : '—';
-  return `<tr class="${rowClass}">
-    <td>${esc(d.loja)}</td>
-    <td class="num">${esc(d.marca)}</td>
-    <td class="num">#${esc(d.id_pedido)}</td>
-    <td class="num">${dataFmt}</td>
-    <td>${esc(d.motivo)}</td>
-    <td class="valor-cell num">R$ ${fmtBRL(d.valor)}</td>
-    <td>${pill}</td>
-  </tr>`;
-}).join('');
+function renderAll(){
+  const rows = scopedData();
+  const total = rows.length;
+  const valorTotal = rows.reduce((a,d)=>a+d.valor,0);
+  const green = rows.filter(d=>d.classe==='GREEN');
+  const orange = rows.filter(d=>d.classe==='ORANGE');
+  const valorGreen = green.reduce((a,d)=>a+d.valor,0);
+  const valorOrange = orange.reduce((a,d)=>a+d.valor,0);
+  const lojasAfetadas = new Set(rows.map(d=>d.loja)).size;
+
+  document.getElementById('totalRegistros').textContent = total;
+  updateWeekRangeLabel();
+
+  document.getElementById('kpiStrip').innerHTML = `
+    <div class="kpi warn"><div class="k-label">Pedidos sem contestação</div><div class="k-val num">${total}</div><div class="k-sub">R$ ${fmtBRL(valorTotal)} em jogo</div></div>
+    <div class="kpi"><div class="k-label">Aprovaria / iFood</div><div class="k-val num" style="color:var(--green)">${green.length}</div><div class="k-sub">R$ ${fmtBRL(valorGreen)} deixados na mesa</div></div>
+    <div class="kpi"><div class="k-label">Erro da unidade</div><div class="k-val num" style="color:var(--orange)">${orange.length}</div><div class="k-sub">R$ ${fmtBRL(valorOrange)}</div></div>
+    <div class="kpi"><div class="k-label">Lojas envolvidas</div><div class="k-val num">${lojasAfetadas}</div><div class="k-sub">com ao menos 1 pendência</div></div>
+  `;
+
+  document.getElementById('splitBlock').innerHTML = `
+    <div class="split-item">
+      <div class="s-title"><span class="split-dot" style="background:var(--green)"></span>Aprovado pelo iFood (sem culpa da unidade)</div>
+      <div class="s-val num">${green.length} pedidos · R$ ${fmtBRL(valorGreen)}</div>
+      <div class="s-desc">Reembolso que o iFood teria concedido — esse valor só não foi recuperado porque a contestação não foi aberta a tempo.</div>
+    </div>
+    <div class="split-item">
+      <div class="s-title"><span class="split-dot" style="background:var(--orange)"></span>Erro da unidade</div>
+      <div class="s-val num">${orange.length} pedidos · R$ ${fmtBRL(valorOrange)}</div>
+      <div class="s-desc">Cancelamento causado pela própria loja — não é erro de cliente nem falha logística. Ponto de atenção operacional.</div>
+    </div>
+  `;
+
+  renderMotivos(document.getElementById('motivosOverall'), rows, 6);
+  renderList(document.getElementById('searchLoja').value);
+  document.getElementById('detailPanel').innerHTML = `<div class="detail-empty"><span>🧾</span>Selecione uma ${itemLabel()} na lista ao lado<br>para ver os pedidos pendentes.</div>`;
+
+  const sortedAll = rows.slice().sort((a,b)=> b.valor - a.valor);
+  document.getElementById('fullTableBody').innerHTML = sortedAll.map(d=>{
+    const dt = new Date(d.data.replace(' ','T'));
+    const dataFmt = dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const rowClass = d.classe==='GREEN' ? 'row-green' : (d.classe==='ORANGE' ? 'row-orange' : '');
+    const pill = d.classe==='GREEN' ? '<span class="tag-pill tag-green">aprovaria · iFood</span>' :
+                 d.classe==='ORANGE' ? '<span class="tag-pill tag-orange">erro da unidade</span>' : '—';
+    return `<tr class="${rowClass}">
+      <td>${esc(d.loja)}</td>
+      <td class="num">${esc(d.marca)}</td>
+      <td class="num">#${esc(d.id_pedido)}</td>
+      <td class="num">${d._weekLabel}</td>
+      <td class="num">${dataFmt}</td>
+      <td>${esc(d.motivo)}</td>
+      <td class="valor-cell num">R$ ${fmtBRL(d.valor)}</td>
+      <td>${pill}</td>
+    </tr>`;
+  }).join('');
+}
+
+renderWeekTabs();
+renderAll();
 </script>
 </body>
 </html>
